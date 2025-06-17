@@ -1,8 +1,14 @@
 import bcrypt from 'bcryptjs'
 import { prisma } from './db'
 
+export function isStrongPassword(password: string): boolean {
+  // Mínimo 12 caracteres, al menos una mayúscula, una minúscula, un número y un símbolo
+  const strongRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?]).{12,}$/
+  return strongRegex.test(password)
+}
+
 export async function hashPassword(password: string): Promise<string> {
-  const saltRounds = 12
+  const saltRounds = 14 // Mayor seguridad
   return bcrypt.hash(password, saltRounds)
 }
 
@@ -19,10 +25,13 @@ export async function createUser(userData: {
   lastName?: string
   department?: string
   phone?: string
+  performedBy?: number // id del admin que crea
 }) {
+  if (!isStrongPassword(userData.password)) {
+    throw new Error('La contraseña no es lo suficientemente segura.')
+  }
   const hashedPassword = await hashPassword(userData.password)
-  
-  return prisma.user.create({
+  const user = await prisma.user.create({
     data: {
       username: userData.username,
       email: userData.email,
@@ -34,6 +43,18 @@ export async function createUser(userData: {
       phone: userData.phone,
     },
   })
+  // Registrar en historial
+  if (userData.performedBy) {
+    await prisma.userChangeHistory.create({
+      data: {
+        targetUserId: user.id,
+        action: 'create',
+        performedBy: userData.performedBy,
+        details: `Usuario creado: ${user.username}`,
+      },
+    })
+  }
+  return user
 }
 
 export async function authenticateUser(username: string, password: string) {
@@ -86,10 +107,20 @@ export async function updateUser(id: number, userData: {
   department?: string
   phone?: string
   email?: string
+  password?: string
+  performedBy?: number // id del admin que modifica
 }) {
-  return prisma.user.update({
+  if (userData.password && !isStrongPassword(userData.password)) {
+    throw new Error('La contraseña no es lo suficientemente segura.')
+  }
+  let dataToUpdate: any = { ...userData }
+  if (userData.password) {
+    dataToUpdate.passwordHash = await hashPassword(userData.password)
+    delete dataToUpdate.password
+  }
+  const user = await prisma.user.update({
     where: { id },
-    data: userData,
+    data: dataToUpdate,
     select: {
       id: true,
       username: true,
@@ -103,4 +134,41 @@ export async function updateUser(id: number, userData: {
       updatedAt: true,
     },
   })
+  // Registrar en historial
+  if (userData.performedBy) {
+    await prisma.userChangeHistory.create({
+      data: {
+        targetUserId: id,
+        action: 'update',
+        performedBy: userData.performedBy,
+        details: `Usuario modificado: ${user.username}`,
+      },
+    })
+  }
+  return user
+}
+
+export async function deactivateUser(id: number, performedBy: number) {
+  const user = await prisma.user.update({
+    where: { id },
+    data: { isActive: false },
+    select: {
+      id: true,
+      username: true,
+      email: true,
+      role: true,
+      isActive: true,
+      updatedAt: true,
+    },
+  })
+  // Registrar en historial
+  await prisma.userChangeHistory.create({
+    data: {
+      targetUserId: id,
+      action: 'deactivate',
+      performedBy,
+      details: `Usuario desactivado: ${user.username}`,
+    },
+  })
+  return user
 } 

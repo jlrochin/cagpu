@@ -72,4 +72,15 @@ model Notification {
   service Service? @relation(fields: [serviceId], references: [id])
 
   @@map("notifications")
+}
+
+model UserChangeHistory {
+  id           Int      @id @default(autoincrement())
+  targetUserId Int      @map("target_user_id")
+  action       String   @db.VarChar(30) // create, update, deactivate, etc.
+  performedBy  Int      @map("performed_by")
+  details      String?  @db.Text
+  createdAt    DateTime @default(now()) @map("created_at")
+
+  @@map("user_change_history")
 } 
