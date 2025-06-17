@@ -1,6 +1,9 @@
 # Etapa de construcción
 FROM node:18-alpine AS builder
 
+# Instalar dependencias necesarias para Prisma
+RUN apk add --no-cache openssl
+
 # Instalar pnpm
 RUN npm install -g pnpm
 
@@ -24,6 +27,9 @@ RUN pnpm build
 
 # Etapa de producción
 FROM node:18-alpine AS runner
+
+# Instalar dependencias necesarias para Prisma
+RUN apk add --no-cache openssl
 
 # Instalar pnpm
 RUN npm install -g pnpm
