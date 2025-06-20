@@ -3,6 +3,7 @@
 import { ClipboardList, Menu, Settings, User } from "lucide-react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
+import { useEffect, useState } from "react"
 
 import { Button } from "@/components/ui/button"
 import {
@@ -19,32 +20,17 @@ import { ThemeToggle } from "@/components/theme-toggle"
 import { NotificationsPopover } from "./notifications-popover"
 
 export function Header() {
-  const pathname = usePathname()
-
   return (
     <header className="sticky top-0 z-10 w-full border-b bg-background">
       <div className="container flex h-16 items-center justify-between px-4">
         <div className="flex items-center gap-2 md:gap-4">
-          <Sheet>
-            <SheetTrigger asChild>
-              <Button variant="outline" size="icon" className="md:hidden">
-                <Menu className="h-5 w-5" />
-                <span className="sr-only">Toggle menu</span>
-              </Button>
-            </SheetTrigger>
-            <SheetContent side="left" className="p-0">
-              <MobileSidebar />
-            </SheetContent>
-          </Sheet>
-          <Link href="/" className="flex items-center gap-2">
-            <div className="h-8 w-8 rounded-full bg-blue-600 flex items-center justify-center">
-              <ClipboardList className="h-4 w-4 text-white" />
-            </div>
-            <span className="font-semibold text-foreground hidden md:inline-block text-sm md:text-base">CAGPU</span>
-            <span className="text-xs text-muted-foreground hidden lg:inline-block">
-              Catálogo de Atención Generalizada a la Población Usuaria
-            </span>
-          </Link>
+          <div className="h-8 w-8 rounded-full bg-blue-600 flex items-center justify-center">
+            <ClipboardList className="h-4 w-4 text-white" />
+          </div>
+          <span className="font-semibold text-foreground hidden md:inline-block text-sm md:text-base">CAGPU</span>
+          <span className="text-xs text-muted-foreground hidden lg:inline-block">
+            Catálogo de Atención Generalizada a la Población Usuaria
+          </span>
         </div>
         <div className="flex items-center gap-2">
           <ThemeToggle />
@@ -60,13 +46,13 @@ export function Header() {
               <DropdownMenuLabel>Mi cuenta</DropdownMenuLabel>
               <DropdownMenuSeparator />
               <DropdownMenuItem asChild>
-                <Link href="/perfil" className={pathname === "/perfil" ? "font-medium" : ""}>
+                <Link href="/perfil" className={""}>
                   <User className="mr-2 h-4 w-4" />
                   Perfil
                 </Link>
               </DropdownMenuItem>
               <DropdownMenuItem asChild>
-                <Link href="/configuracion" className={pathname === "/configuracion" ? "font-medium" : ""}>
+                <Link href="/configuracion" className={""}>
                   <Settings className="mr-2 h-4 w-4" />
                   Configuración
                 </Link>

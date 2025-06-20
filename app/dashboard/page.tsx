@@ -8,6 +8,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Toaster } from "@/components/ui/toaster"
 import React from "react"
 import { Button } from "@/components/ui/button"
+import Link from "next/link"
+import AdminUsuariosPage from "../admin/usuarios/page"
 
 function getRole() {
   if (typeof window !== 'undefined') {
@@ -34,9 +36,10 @@ function AccessDenied({ onGoToServices }: { onGoToServices: () => void }) {
 
 export default function Dashboard() {
   const [role, setRole] = React.useState('user')
-  const [tab, setTab] = React.useState('services')
+  const [tab, setTab] = React.useState('admin')
   React.useEffect(() => {
     const r = getRole()
+    console.log('🔍 DEBUG: Rol detectado:', r)
     setRole(r)
     // Si es user, mostrar primero Servicios; si es admin, Dashboard
     if (r === 'user') {
@@ -73,6 +76,12 @@ export default function Dashboard() {
               >
                 Analíticas
               </TabsTrigger>
+              <TabsTrigger
+                value="admin"
+                className="rounded-md data-[state=active]:bg-gradient-to-r data-[state=active]:from-purple-600 data-[state=active]:to-pink-600 data-[state=active]:text-white"
+              >
+                Administrador
+              </TabsTrigger>
             </TabsList>
           </div>
 
@@ -94,6 +103,10 @@ export default function Dashboard() {
             ) : (
               <AnalyticsDashboard />
             )}
+          </TabsContent>
+
+          <TabsContent value="admin" className="mt-0 space-y-0">
+            <AdminUsuariosPage />
           </TabsContent>
         </Tabs>
       </main>

@@ -24,13 +24,14 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { ExportOptions } from "@/components/export-options"
+import type { Service } from "@/lib/types"
 
 export function ServiceManagement() {
   const [selectedService, setSelectedService] = useState<string | null>(null)
   const [searchQuery, setSearchQuery] = useState("")
   const [activeFilters, setActiveFilters] = useState<string[]>([])
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid")
-  const [modalService, setModalService] = useState(null)
+  const [modalService, setModalService] = useState<Service | null>(null)
 
   const handleServiceClick = (serviceId: string) => {
     setSelectedService(serviceId === selectedService ? null : serviceId)
@@ -85,7 +86,7 @@ export function ServiceManagement() {
     }
   }
 
-  function handleEditService(service) {
+  function handleEditService(service: Service) {
     setModalService(service)
   }
 

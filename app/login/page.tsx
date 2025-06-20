@@ -19,6 +19,7 @@ export default function Login() {
   const [show, setShow] = useState(false)
   const [username, setUsername] = useState('')
   const [password, setPassword] = useState('')
+  const [loginError, setLoginError] = useState('')
 
   React.useEffect(() => {
     setShow(true)
@@ -32,6 +33,7 @@ export default function Login() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setIsLoading(true)
+    setLoginError('')
 
     try {
       const response = await fetch('/api/auth/login', {
@@ -45,6 +47,7 @@ export default function Login() {
       const data = await response.json()
 
       if (!response.ok) {
+        setLoginError(data.error || 'Error en el inicio de sesión')
         toast.error(data.error || 'Error en el inicio de sesión')
         setIsLoading(false)
         return
@@ -53,6 +56,8 @@ export default function Login() {
       // Guardar datos del usuario en localStorage
       localStorage.setItem('user', JSON.stringify(data.user))
       localStorage.setItem('role', data.user.role)
+      // Notificar a otros componentes
+      window.dispatchEvent(new Event('userChanged'))
 
       toast.success("¡Inicio de sesión exitoso!")
       router.push('/dashboard')
@@ -136,7 +141,11 @@ export default function Login() {
                         />
                       </div>
                     </div>
-                    
+                    {loginError && (
+                      <div className="mt-2 text-center text-red-600 dark:text-red-400 text-sm font-semibold">
+                        {loginError}
+                      </div>
+                    )}
                     <div className="mt-6">
                       <Button 
                         type="submit" 
