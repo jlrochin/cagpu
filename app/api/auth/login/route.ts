@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { authenticateUser } from '@/lib/auth'
+import { prisma } from '@/lib/db'
 
 export async function POST(request: NextRequest) {
   try {
@@ -20,13 +21,33 @@ export async function POST(request: NextRequest) {
         { status: 401 }
       )
     }
+    if ('inactive' in user && user.inactive) {
+      return NextResponse.json(
+        { error: 'Tu usuario está desactivado. Contacta al administrador.' },
+        { status: 403 }
+      )
+    }
 
-    // En un entorno de producción, aquí deberías generar un JWT token
-    // Por ahora, devolvemos los datos del usuario
-    return NextResponse.json({
+    // Registrar inicio de sesión en AuditLog
+    try {
+      await prisma.auditLog.create({
+        data: {
+          action: 'login',
+          performedBy: user!.id,
+          details: `Inicio de sesión exitoso para ${user.username}`,
+          ip: request.headers.get('x-forwarded-for') || request.ip || '',
+          userAgent: request.headers.get('user-agent') || '',
+        },
+      })
+    } catch (e) {
+      console.error('No se pudo registrar el login en AuditLog:', e)
+    }
+
+    // Crear respuesta y setear cookie 'auth'
+    const response = NextResponse.json({
       success: true,
       user: {
-        id: user.id,
+        id: user!.id,
         username: user.username,
         email: user.email,
         role: user.role,
@@ -35,6 +56,19 @@ export async function POST(request: NextRequest) {
         department: user.department,
       },
     })
+
+    // Puedes poner el id, un token, o lo que prefieras
+    if (user && user.id) {
+      response.cookies.set('auth', user.id.toString(), {
+        httpOnly: true,
+        path: '/',
+        // secure: true, // solo en producción
+        // sameSite: 'lax',
+        // maxAge: 60 * 60 * 24, // 1 día
+      })
+    }
+
+    return response
   } catch (error) {
     console.error('Error en login:', error)
     return NextResponse.json(

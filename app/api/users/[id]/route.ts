@@ -10,6 +10,13 @@ export async function PUT(
     const userId = parseInt(params.id)
     const userData = await request.json()
 
+    // Obtener el id del usuario autenticado desde la cookie
+    const authCookie = request.cookies.get('auth')
+    const performedBy = authCookie ? parseInt(authCookie.value) : null
+    if (!performedBy) {
+      return NextResponse.json({ error: 'No autenticado' }, { status: 401 })
+    }
+
     // Verificar si el usuario existe
     const existingUser = await prisma.user.findUnique({
       where: { id: userId },
@@ -82,7 +89,7 @@ export async function PUT(
       data: {
         targetUserId: userId,
         action: 'update',
-        performedBy: 1, // TODO: Obtener ID del usuario actual desde sesión
+        performedBy,
         details: `Usuario actualizado: ${JSON.stringify(updateData)}`,
       },
     })
@@ -107,6 +114,13 @@ export async function PATCH(
   try {
     const userId = parseInt(params.id)
     const { action } = await request.json()
+
+    // Obtener el id del usuario autenticado desde la cookie
+    const authCookie = request.cookies.get('auth')
+    const performedBy = authCookie ? parseInt(authCookie.value) : null
+    if (!performedBy) {
+      return NextResponse.json({ error: 'No autenticado' }, { status: 401 })
+    }
 
     // Verificar si el usuario existe
     const existingUser = await prisma.user.findUnique({
@@ -160,7 +174,7 @@ export async function PATCH(
       data: {
         targetUserId: userId,
         action: actionType,
-        performedBy: 1, // TODO: Obtener ID del usuario actual desde sesión
+        performedBy,
         details: `Usuario ${actionType === 'deactivate' ? 'desactivado' : 'activado'}`,
       },
     })

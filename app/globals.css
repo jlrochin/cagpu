@@ -85,3 +85,12 @@
 html, body {
   overflow-y: scroll;
 }
+
+/* Forzar la manita en todos los items de menú de Radix UI (Dropdown, Context, Menubar, Select, etc.) */
+[data-radix-menu-item],
+[data-radix-dropdown-menu-item],
+[data-radix-select-item],
+[data-radix-menubar-item],
+[data-radix-context-menu-item] {
+  cursor: pointer !important;
+}

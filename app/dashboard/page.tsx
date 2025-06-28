@@ -10,6 +10,7 @@ import React from "react"
 import { Button } from "@/components/ui/button"
 import Link from "next/link"
 import AdminUsuariosPage from "../admin/usuarios/page"
+import { prisma } from '@/lib/db'
 
 function getRole() {
   if (typeof window !== 'undefined') {
@@ -34,9 +35,125 @@ function AccessDenied({ onGoToServices }: { onGoToServices: () => void }) {
   )
 }
 
+function CambiosRecientes({ history }: { history: any[] }) {
+  // Función para asignar color según la acción
+  function actionBadgeClass(action: string) {
+    switch (action) {
+      case 'activate':
+        return 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200';
+      case 'deactivate':
+        return 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200';
+      case 'update':
+        return 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200';
+      case 'create':
+        return 'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200';
+      default:
+        return 'bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-200';
+    }
+  }
+
+  return (
+    <div className="space-y-4">
+      <h2 className="text-2xl font-bold mb-4">Cambios Recientes de Usuarios</h2>
+      {history.length === 0 ? (
+        <div className="text-gray-500">No hay cambios recientes.</div>
+      ) : (
+        <ul className="space-y-2">
+          {history.map((item) => (
+            <li key={item.id} className="border rounded-lg p-4 bg-gray-50 dark:bg-gray-800">
+              <div className="flex justify-between items-center mb-1">
+                <span className={`inline-block px-2 py-0.5 rounded font-semibold text-xs mr-2 capitalize ${actionBadgeClass(item.action)}`}>{item.action}</span>
+                <span className="inline-block bg-gray-200 text-gray-800 dark:bg-gray-700 dark:text-gray-200 px-2 py-0.5 rounded font-semibold text-xs">
+                  {new Date(item.createdAt).toLocaleString('es-ES')}
+                </span>
+              </div>
+              <div className="text-sm text-gray-700 dark:text-gray-300">
+                {item.details}
+              </div>
+              <div className="text-xs text-gray-500 mt-1 flex gap-2 items-center">
+                Usuario afectado:
+                <span className="inline-block bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200 px-2 py-0.5 rounded font-semibold text-xs">
+                  {item.targetUser?.username || item.targetUserId}
+                </span>
+                |
+                Realizado por:
+                <span className="inline-block bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200 px-2 py-0.5 rounded font-semibold text-xs">
+                  {item.performedByUser?.username || item.performedBy}
+                </span>
+              </div>
+            </li>
+          ))}
+        </ul>
+      )}
+    </div>
+  );
+}
+
+function AuditoriaLog({ logs }: { logs: any[] }) {
+  function actionBadgeClass(action: string) {
+    switch (action) {
+      case 'login':
+        return 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200';
+      case 'logout':
+        return 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200';
+      case 'create':
+        return 'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200';
+      case 'update':
+        return 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200';
+      default:
+        return 'bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-200';
+    }
+  }
+  return (
+    <div className="space-y-4">
+      <h2 className="text-2xl font-bold mb-4">Auditoría del Sistema</h2>
+      {logs.length === 0 ? (
+        <div className="text-gray-500">No hay eventos de auditoría.</div>
+      ) : (
+        <ul className="space-y-2">
+          {logs.map((item) => (
+            <li key={item.id} className="border rounded-lg p-4 bg-gray-50 dark:bg-gray-800">
+              <div className="flex justify-between items-center mb-1">
+                <span className={`inline-block px-2 py-0.5 rounded font-semibold text-xs mr-2 capitalize ${actionBadgeClass(item.action)}`}>{item.action}</span>
+                <span className="inline-block bg-gray-200 text-gray-800 dark:bg-gray-700 dark:text-gray-200 px-2 py-0.5 rounded font-semibold text-xs">
+                  {new Date(item.createdAt).toLocaleString('es-ES')}
+                </span>
+              </div>
+              <div className="text-sm text-gray-700 dark:text-gray-300">
+                {item.details}
+              </div>
+              <div className="text-xs text-gray-500 mt-1 flex gap-2 items-center">
+                {item.performedByUser?.username && (
+                  <>
+                    Usuario:
+                    <span className="inline-block bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200 px-2 py-0.5 rounded font-semibold text-xs">
+                      {item.performedByUser.username}
+                    </span>
+                  </>
+                )}
+                {item.targetUser?.username && (
+                  <>
+                    | Afectado:
+                    <span className="inline-block bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200 px-2 py-0.5 rounded font-semibold text-xs">
+                      {item.targetUser.username}
+                    </span>
+                  </>
+                )}
+                {item.ip && <span>| IP: {item.ip}</span>}
+              </div>
+            </li>
+          ))}
+        </ul>
+      )}
+    </div>
+  );
+}
+
 export default function Dashboard() {
   const [role, setRole] = React.useState('user')
   const [tab, setTab] = React.useState('admin')
+  const [history, setHistory] = React.useState<any[]>([])
+  const [audit, setAudit] = React.useState<any[]>([])
   React.useEffect(() => {
     const r = getRole()
     console.log('🔍 DEBUG: Rol detectado:', r)
@@ -47,6 +164,13 @@ export default function Dashboard() {
     } else {
       setTab('dashboard')
     }
+    // Cargar historial de cambios recientes
+    fetch('/api/user-change-history')
+      .then(res => res.json())
+      .then(data => setHistory(data.history || []));
+    fetch('/api/audit-log')
+      .then(res => res.json())
+      .then(data => setAudit(data.logs || []));
   }, [])
 
   const handleGoToServices = () => setTab('services')
@@ -82,6 +206,18 @@ export default function Dashboard() {
               >
                 Administrador
               </TabsTrigger>
+              <TabsTrigger
+                value="history"
+                className="rounded-md data-[state=active]:bg-gradient-to-r data-[state=active]:from-green-600 data-[state=active]:to-lime-600 data-[state=active]:text-white"
+              >
+                Cambios Recientes
+              </TabsTrigger>
+              <TabsTrigger
+                value="audit"
+                className="rounded-md data-[state=active]:bg-gradient-to-r data-[state=active]:from-gray-600 data-[state=active]:to-gray-400 data-[state=active]:text-white"
+              >
+                Auditoría
+              </TabsTrigger>
             </TabsList>
           </div>
 
@@ -107,6 +243,14 @@ export default function Dashboard() {
 
           <TabsContent value="admin" className="mt-0 space-y-0">
             <AdminUsuariosPage />
+          </TabsContent>
+
+          <TabsContent value="history" className="mt-0 space-y-0">
+            <CambiosRecientes history={history} />
+          </TabsContent>
+
+          <TabsContent value="audit" className="mt-0 space-y-0">
+            <AuditoriaLog logs={audit} />
           </TabsContent>
         </Tabs>
       </main>

@@ -25,6 +25,10 @@ model User {
   updatedAt    DateTime @updatedAt @map("updated_at")
 
   notifications Notification[]
+  userChangeHistoryAsTarget   UserChangeHistory[] @relation("TargetUser")
+  userChangeHistoryAsPerformer UserChangeHistory[] @relation("PerformedByUser")
+  auditLogsAsTarget           AuditLog[] @relation("AuditTargetUser")
+  auditLogsAsPerformer        AuditLog[] @relation("AuditPerformedByUser")
 
   @@map("users")
 }
@@ -75,12 +79,31 @@ model Notification {
 }
 
 model UserChangeHistory {
-  id           Int      @id @default(autoincrement())
-  targetUserId Int      @map("target_user_id")
-  action       String   @db.VarChar(30) // create, update, deactivate, etc.
-  performedBy  Int      @map("performed_by")
-  details      String?  @db.Text
-  createdAt    DateTime @default(now()) @map("created_at")
+  id            Int      @id @default(autoincrement())
+  targetUserId  Int
+  action        String
+  performedBy   Int
+  details       String?
+  createdAt     DateTime @default(now())
+
+  targetUser      User   @relation("TargetUser", fields: [targetUserId], references: [id])
+  performedByUser User   @relation("PerformedByUser", fields: [performedBy], references: [id])
 
   @@map("user_change_history")
+}
+
+model AuditLog {
+  id           Int      @id @default(autoincrement())
+  action       String
+  targetUserId Int?
+  performedBy  Int?
+  details      String?
+  ip           String?
+  userAgent    String?
+  createdAt    DateTime @default(now())
+
+  targetUser      User? @relation("AuditTargetUser", fields: [targetUserId], references: [id])
+  performedByUser User? @relation("AuditPerformedByUser", fields: [performedBy], references: [id])
+
+  @@map("audit_log")
 } 

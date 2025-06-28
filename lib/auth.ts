@@ -27,8 +27,9 @@ export async function createUser(userData: {
   phone?: string
   performedBy?: number // id del admin que crea
 }) {
-  if (!isStrongPassword(userData.password)) {
-    throw new Error('La contraseña no es lo suficientemente segura.')
+  // Validación temporal para pruebas: solo requiere al menos 4 caracteres
+  if (!userData.password || userData.password.length < 4) {
+    throw new Error('La contraseña debe tener al menos 4 caracteres (validación temporal para pruebas).')
   }
   const hashedPassword = await hashPassword(userData.password)
   const user = await prisma.user.create({
@@ -62,14 +63,16 @@ export async function authenticateUser(username: string, password: string) {
     where: { username },
   })
 
-  if (!user || !user.isActive) {
-    return null
+  if (!user) {
+    return null;
+  }
+  if (!user.isActive) {
+    return { inactive: true };
   }
 
   const isValidPassword = await verifyPassword(password, user.passwordHash)
-  
   if (!isValidPassword) {
-    return null
+    return null;
   }
 
   return {
