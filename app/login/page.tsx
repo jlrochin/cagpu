@@ -56,6 +56,7 @@ export default function Login() {
       // Guardar datos del usuario en localStorage
       localStorage.setItem('user', JSON.stringify(data.user))
       localStorage.setItem('role', data.user.role)
+      localStorage.setItem('username', data.user.username)
       // Notificar a otros componentes
       window.dispatchEvent(new Event('userChanged'))
 

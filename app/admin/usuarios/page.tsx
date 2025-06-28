@@ -59,6 +59,7 @@ export default function AdminUsuariosPage() {
   const router = useRouter();
   const [confirmUser, setConfirmUser] = useState<User | null>(null);
   const [confirmLoading, setConfirmLoading] = useState(false);
+  const [currentUserId, setCurrentUserId] = useState<number | null>(null);
 
   useEffect(() => {
     fetch('/api/users')
@@ -71,6 +72,13 @@ export default function AdminUsuariosPage() {
         toast.error('Error al cargar usuarios')
         setLoading(false)
       })
+    // Obtener id del usuario actual del localStorage
+    try {
+      const user = JSON.parse(localStorage.getItem('user') || '{}');
+      setCurrentUserId(user.id || null);
+    } catch {
+      setCurrentUserId(null);
+    }
   }, [])
 
   const handleInput = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
@@ -305,11 +313,12 @@ export default function AdminUsuariosPage() {
                                     : "bg-green-600 hover:bg-green-700 text-white"
                                 }`} 
                                 onClick={() => handleDeactivate(user)}
+                                disabled={currentUserId === user.id}
                               >
                                 {user.isActive ? <PowerOff className="h-4 w-4" /> : <Power className="h-4 w-4" />}
                               </Button>
                             </TooltipTrigger>
-                            <TooltipContent>{user.isActive ? 'Desactivar' : 'Activar'}</TooltipContent>
+                            <TooltipContent>{user.isActive ? (currentUserId === user.id ? 'No puedes desactivarte a ti mismo' : 'Desactivar') : 'Activar'}</TooltipContent>
                           </Tooltip>
                         </TooltipProvider>
                       </td>

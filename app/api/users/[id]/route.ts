@@ -122,6 +122,11 @@ export async function PATCH(
       return NextResponse.json({ error: 'No autenticado' }, { status: 401 })
     }
 
+    // No permitir que un usuario se desactive a sí mismo
+    if (action === 'deactivate' && performedBy === userId) {
+      return NextResponse.json({ error: 'No puedes desactivarte a ti mismo.' }, { status: 403 })
+    }
+
     // Verificar si el usuario existe
     const existingUser = await prisma.user.findUnique({
       where: { id: userId },
