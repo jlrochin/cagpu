@@ -133,8 +133,13 @@ export function NotificationsPopover() {
           </ul>
         )}
       </ScrollArea>
-      <div className="p-2 border-t">
-        <Button variant="ghost" size="sm" className="w-full text-xs" onClick={() => router.push('/notificaciones')}>
+      <div className="p-0 border-t">
+        <Button
+          variant="ghost"
+          size="sm"
+          className="w-full py-2 rounded-none bg-transparent hover:bg-muted text-center text-xs font-medium"
+          onClick={() => router.push('/notificaciones')}
+        >
           Ver todas las notificaciones
         </Button>
       </div>
