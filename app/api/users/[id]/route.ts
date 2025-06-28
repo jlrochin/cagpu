@@ -184,6 +184,18 @@ export async function PATCH(
       },
     })
 
+    // Obtener el usuario que realiza la acción
+    const adminUser = await prisma.user.findUnique({ where: { id: performedBy } });
+    // Crear notificación para el usuario afectado
+    await prisma.notification.create({
+      data: {
+        userId: userId,
+        title: actionType === 'deactivate' ? 'Usuario desactivado' : 'Usuario activado',
+        message: `El usuario ${existingUser.username} fue ${actionType === 'deactivate' ? 'desactivado' : 'activado'} por ${adminUser?.username || 'un administrador'}.`,
+        isRead: false,
+      },
+    })
+
     return NextResponse.json({
       success: true,
       user: updatedUser,

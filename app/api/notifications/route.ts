@@ -4,23 +4,39 @@ import { prisma } from '@/lib/db';
 // Obtener notificaciones del usuario autenticado
 export async function GET(request: NextRequest) {
   try {
+    const { searchParams } = new URL(request.url);
+    const showAll = searchParams.get('all') === '1';
     // Obtener el id del usuario autenticado desde la cookie
     const authCookie = request.cookies.get('auth');
     const userId = authCookie ? parseInt(authCookie.value) : null;
     if (!userId) {
       return NextResponse.json({ error: 'No autenticado' }, { status: 401 });
     }
-    // Excluir notificaciones de login/logout
-    const notifications = await prisma.notification.findMany({
-      where: {
-        userId,
-        OR: [
-          { title: { not: { contains: 'login', mode: 'insensitive' } } },
-          { title: { not: { contains: 'logout', mode: 'insensitive' } } },
-        ],
-      },
+    // Obtener el rol del usuario autenticado
+    const user = await prisma.user.findUnique({ where: { id: userId } });
+    if (!user) {
+      return NextResponse.json({ error: 'Usuario no encontrado' }, { status: 404 });
+    }
+    let notifications;
+    const baseWhere = user.role === 'admin' || user.role === 'developer'
+      ? {
+          OR: [
+            { title: { not: { contains: 'login' } } },
+            { title: { not: { contains: 'logout' } } },
+          ],
+        }
+      : {
+          userId,
+          OR: [
+            { title: { not: { contains: 'login' } } },
+            { title: { not: { contains: 'logout' } } },
+          ],
+        };
+    const where = showAll ? baseWhere : { ...baseWhere, isRead: false };
+    notifications = await prisma.notification.findMany({
+      where,
       orderBy: { createdAt: 'desc' },
-      take: 20,
+      take: user.role === 'admin' || user.role === 'developer' ? 50 : 20,
     });
     return NextResponse.json({ notifications });
   } catch (error) {
@@ -39,9 +55,14 @@ export async function PATCH(request: NextRequest) {
     if (!userId) {
       return NextResponse.json({ error: 'No autenticado' }, { status: 401 });
     }
-    // Verificar que la notificación pertenece al usuario
+    // Obtener el rol del usuario autenticado
+    const user = await prisma.user.findUnique({ where: { id: userId } });
+    if (!user) {
+      return NextResponse.json({ error: 'Usuario no encontrado' }, { status: 404 });
+    }
+    // Permitir marcar como leída si es admin/developer o dueño
     const notification = await prisma.notification.findUnique({ where: { id } });
-    if (!notification || notification.userId !== userId) {
+    if (!notification || (notification.userId !== userId && user.role !== 'admin' && user.role !== 'developer')) {
       return NextResponse.json({ error: 'No autorizado' }, { status: 403 });
     }
     await prisma.notification.update({ where: { id }, data: { isRead: true } });

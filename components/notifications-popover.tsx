@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react"
 import { Bell, Check, X } from "lucide-react"
 import { motion, AnimatePresence } from "framer-motion"
+import { useRouter } from 'next/navigation'
 
 import { Button } from "@/components/ui/button"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
@@ -16,15 +17,23 @@ export function NotificationsPopover() {
   const [unreadCount, setUnreadCount] = useState(0)
   const [open, setOpen] = useState(false)
   const isDesktop = useMediaQuery("(min-width: 768px)")
+  const router = useRouter();
 
-  // Cargar notificaciones reales
+  // Cargar notificaciones reales (y polling)
   useEffect(() => {
-    fetch('/api/notifications')
-      .then(res => res.json())
-      .then(data => {
-        setNotifications(data.notifications || [])
-        setUnreadCount((data.notifications || []).filter((n: any) => !n.isRead).length)
-      })
+    let isMounted = true;
+    const fetchNotifications = () => {
+      fetch('/api/notifications')
+        .then(res => res.json())
+        .then(data => {
+          if (!isMounted) return;
+          setNotifications(data.notifications || [])
+          setUnreadCount((data.notifications || []).length)
+        })
+    }
+    fetchNotifications();
+    const interval = setInterval(fetchNotifications, 15000); // cada 15 segundos
+    return () => { isMounted = false; clearInterval(interval); }
   }, [])
 
   const markAllAsRead = async () => {
@@ -125,7 +134,7 @@ export function NotificationsPopover() {
         )}
       </ScrollArea>
       <div className="p-2 border-t">
-        <Button variant="ghost" size="sm" className="w-full text-xs">
+        <Button variant="ghost" size="sm" className="w-full text-xs" onClick={() => router.push('/notificaciones')}>
           Ver todas las notificaciones
         </Button>
       </div>
