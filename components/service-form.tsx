@@ -64,9 +64,12 @@ export function ServiceForm({ service, onSaved }: { service?: Service, onSaved?:
     setIsSaving(true)
     setTimeout(() => {
       setIsSaving(false)
+      const isNewService = !service?.id
       toast({
-        title: "Cambios guardados",
-        description: "La información del servicio se actualizó correctamente."
+        title: isNewService ? "Servicio creado" : "Cambios guardados",
+        description: isNewService 
+          ? "El nuevo servicio se creó correctamente." 
+          : "La información del servicio se actualizó correctamente."
       })
       if (onSaved) onSaved()
       // Aquí iría la lógica para guardar los datos
@@ -309,7 +312,7 @@ export function ServiceForm({ service, onSaved }: { service?: Service, onSaved?:
           ) : (
             <Save className="mr-2 h-4 w-4" />
           )}
-          {isSaving ? "Guardando..." : "Guardar Cambios"}
+          {isSaving ? "Guardando..." : (!service?.id ? "Crear Servicio" : "Guardar Cambios")}
         </Button>
       </motion.form>
     </TooltipProvider>
