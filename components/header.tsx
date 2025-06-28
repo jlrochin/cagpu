@@ -104,3 +104,43 @@ export function Header() {
     </header>
   )
 }
+
+export function NavigationTabs() {
+  const pathname = usePathname();
+  const [role, setRole] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      setRole(localStorage.getItem('role'));
+    }
+  }, []);
+
+  const allTabs = [
+    { label: "Dashboard", href: "/dashboard" },
+    { label: "Servicios", href: "/dashboard" },
+    { label: "Analíticas", href: "/dashboard" },
+    { label: "Administrador", href: "/dashboard" },
+    { label: "Cambios Recientes", href: "/dashboard" },
+    { label: "Auditoría", href: "/dashboard" },
+  ];
+
+  const userTabs = [
+    { label: "Servicios", href: "/dashboard" },
+  ];
+
+  const tabs = role === 'user' ? userTabs : allTabs;
+
+  return (
+    <div className="tabs">
+      {tabs.map(tab => (
+        <Link
+          key={tab.href + tab.label}
+          href={tab.href}
+          className={pathname === tab.href ? "tab-active" : "tab"}
+        >
+          {tab.label}
+        </Link>
+      ))}
+    </div>
+  );
+}

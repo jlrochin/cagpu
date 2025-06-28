@@ -23,6 +23,8 @@ model User {
   isActive     Boolean  @default(true) @map("is_active")
   createdAt    DateTime @default(now()) @map("created_at")
   updatedAt    DateTime @updatedAt @map("updated_at")
+  lastActiveAt DateTime? @map("last_active_at")
+  isInvisible  Boolean  @default(false) @map("is_invisible")
 
   notifications Notification[]
   userChangeHistoryAsTarget   UserChangeHistory[] @relation("TargetUser")

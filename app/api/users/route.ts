@@ -5,6 +5,7 @@ import { createUser } from '@/lib/auth'
 export async function GET() {
   try {
     const users = await prisma.user.findMany({
+      where: { isInvisible: false },
       select: {
         id: true,
         username: true,

@@ -89,7 +89,7 @@ function CambiosRecientes({ history }: { history: any[] }) {
   );
 }
 
-function AuditoriaLog({ logs }: { logs: any[] }) {
+function AuditoriaLog({ logs, page, total, onPageChange }: { logs: any[], page: number, total: number, onPageChange: (p: number) => void }) {
   function actionBadgeClass(action: string) {
     switch (action) {
       case 'login':
@@ -104,12 +104,14 @@ function AuditoriaLog({ logs }: { logs: any[] }) {
         return 'bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-200';
     }
   }
+  const totalPages = Math.ceil(total / 10);
   return (
     <div className="space-y-4">
       <h2 className="text-2xl font-bold mb-4">Auditoría del Sistema</h2>
       {logs.length === 0 ? (
         <div className="text-gray-500">No hay eventos de auditoría.</div>
       ) : (
+        <>
         <ul className="space-y-2">
           {logs.map((item) => (
             <li key={item.id} className="border rounded-lg p-4 bg-gray-50 dark:bg-gray-800">
@@ -144,6 +146,18 @@ function AuditoriaLog({ logs }: { logs: any[] }) {
             </li>
           ))}
         </ul>
+        <div className="flex justify-center mt-4 gap-2">
+          {Array.from({ length: totalPages }, (_, i) => (
+            <button
+              key={i+1}
+              onClick={() => onPageChange(i+1)}
+              className={`px-3 py-1 rounded ${page === i+1 ? 'bg-blue-600 text-white' : 'bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200'}`}
+            >
+              {i+1}
+            </button>
+          ))}
+        </div>
+        </>
       )}
     </div>
   );
@@ -151,107 +165,81 @@ function AuditoriaLog({ logs }: { logs: any[] }) {
 
 export default function Dashboard() {
   const [role, setRole] = React.useState('user')
-  const [tab, setTab] = React.useState('admin')
+  const [tab, setTab] = React.useState('services')
   const [history, setHistory] = React.useState<any[]>([])
   const [audit, setAudit] = React.useState<any[]>([])
+  const [auditTotal, setAuditTotal] = React.useState(0)
+  const [auditPage, setAuditPage] = React.useState(1)
   React.useEffect(() => {
-    const r = getRole()
-    console.log('🔍 DEBUG: Rol detectado:', r)
-    setRole(r)
-    // Si es user, mostrar primero Servicios; si es admin, Dashboard
-    if (r === 'user') {
-      setTab('services')
-    } else {
-      setTab('dashboard')
-    }
+    setRole(getRole())
     // Cargar historial de cambios recientes
     fetch('/api/user-change-history')
       .then(res => res.json())
       .then(data => setHistory(data.history || []));
-    fetch('/api/audit-log')
-      .then(res => res.json())
-      .then(data => setAudit(data.logs || []));
   }, [])
-
-  const handleGoToServices = () => setTab('services')
-
+  React.useEffect(() => {
+    fetch(`/api/audit-log?page=${auditPage}&limit=10`)
+      .then(res => res.json())
+      .then(data => {
+        setAudit(data.logs || [])
+        setAuditTotal(data.total || 0)
+      });
+  }, [auditPage])
+  React.useEffect(() => {
+    if (role === 'user') {
+      setTab('services')
+    }
+  }, [role])
   return (
     <div className="min-h-screen bg-background flex flex-col">
       <Header />
       <main className="flex-1 container mx-auto p-4 md:p-6">
-        <Tabs value={tab} onValueChange={setTab} defaultValue={role === 'user' ? 'services' : 'dashboard'} className="space-y-6">
+        <Tabs value={tab} onValueChange={setTab} className="space-y-6">
           <div className="flex justify-between items-center">
             <TabsList className="bg-muted/80 p-1">
-              <TabsTrigger
-                value="dashboard"
-                className="rounded-md data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-600 data-[state=active]:to-indigo-600 data-[state=active]:text-white"
-              >
-                Dashboard
-              </TabsTrigger>
+              {role !== 'user' && (
+                <TabsTrigger value="dashboard">Dashboard</TabsTrigger>
+              )}
               <TabsTrigger
                 value="services"
                 className="rounded-md data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-600 data-[state=active]:to-indigo-600 data-[state=active]:text-white"
               >
                 Servicios
               </TabsTrigger>
-              <TabsTrigger
-                value="analytics"
-                className="rounded-md data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-600 data-[state=active]:to-indigo-600 data-[state=active]:text-white"
-              >
-                Analíticas
-              </TabsTrigger>
-              <TabsTrigger
-                value="admin"
-                className="rounded-md data-[state=active]:bg-gradient-to-r data-[state=active]:from-purple-600 data-[state=active]:to-pink-600 data-[state=active]:text-white"
-              >
-                Administrador
-              </TabsTrigger>
-              <TabsTrigger
-                value="history"
-                className="rounded-md data-[state=active]:bg-gradient-to-r data-[state=active]:from-green-600 data-[state=active]:to-lime-600 data-[state=active]:text-white"
-              >
-                Cambios Recientes
-              </TabsTrigger>
-              <TabsTrigger
-                value="audit"
-                className="rounded-md data-[state=active]:bg-gradient-to-r data-[state=active]:from-gray-600 data-[state=active]:to-gray-400 data-[state=active]:text-white"
-              >
-                Auditoría
-              </TabsTrigger>
+              {role !== 'user' && <TabsTrigger value="analytics">Analíticas</TabsTrigger>}
+              {role !== 'user' && <TabsTrigger value="admin">Administrador</TabsTrigger>}
+              {role !== 'user' && <TabsTrigger value="history">Cambios Recientes</TabsTrigger>}
+              {role !== 'user' && <TabsTrigger value="audit">Auditoría</TabsTrigger>}
             </TabsList>
           </div>
-
-          <TabsContent value="dashboard" className="mt-0 space-y-0">
-            {role === 'user' ? (
-              <AccessDenied onGoToServices={handleGoToServices} />
-            ) : (
+          {role !== 'user' && (
+            <TabsContent value="dashboard">
               <DashboardOverview />
-            )}
-          </TabsContent>
-
-          <TabsContent value="services" className="mt-0 space-y-0">
+            </TabsContent>
+          )}
+          <TabsContent value="services">
             <ServiceManagement />
           </TabsContent>
-
-          <TabsContent value="analytics" className="mt-0 space-y-0">
-            {role === 'user' ? (
-              <AccessDenied onGoToServices={handleGoToServices} />
-            ) : (
+          {role !== 'user' && (
+            <TabsContent value="analytics">
               <AnalyticsDashboard />
-            )}
-          </TabsContent>
-
-          <TabsContent value="admin" className="mt-0 space-y-0">
-            <AdminUsuariosPage />
-          </TabsContent>
-
-          <TabsContent value="history" className="mt-0 space-y-0">
-            <CambiosRecientes history={history} />
-          </TabsContent>
-
-          <TabsContent value="audit" className="mt-0 space-y-0">
-            <AuditoriaLog logs={audit} />
-          </TabsContent>
+            </TabsContent>
+          )}
+          {role !== 'user' && (
+            <TabsContent value="admin">
+              <AdminUsuariosPage />
+            </TabsContent>
+          )}
+          {role !== 'user' && (
+            <TabsContent value="history">
+              <CambiosRecientes history={history} />
+            </TabsContent>
+          )}
+          {role !== 'user' && (
+            <TabsContent value="audit">
+              <AuditoriaLog logs={audit} page={auditPage} total={auditTotal} onPageChange={setAuditPage} />
+            </TabsContent>
+          )}
         </Tabs>
       </main>
       <Toaster />

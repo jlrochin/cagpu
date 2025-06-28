@@ -275,7 +275,7 @@ export default function AdminUsuariosPage() {
                       <td className="px-3 py-2">{user.firstName} {user.lastName}</td>
                       <td className="px-3 py-2">{user.department}</td>
                       <td className="px-3 py-2">{user.phone}</td>
-                      <td className="px-3 py-2 text-center">{user.isActive ? '✔️' : '❌'}</td>
+                      <td className="px-3 py-2 text-center">{user.isActive ? '✅' : '❌'}</td>
                       <td className="px-3 py-2 flex gap-2 items-center min-w-[120px]">
                         <TooltipProvider delayDuration={0}>
                           <Tooltip>

@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { motion } from "framer-motion"
 import { Edit, Filter, Plus, Search, X } from "lucide-react"
 import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog"
@@ -32,6 +32,13 @@ export function ServiceManagement() {
   const [activeFilters, setActiveFilters] = useState<string[]>([])
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid")
   const [modalService, setModalService] = useState<Service | null>(null)
+  const [role, setRole] = useState<string | null>(null)
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      setRole(localStorage.getItem('role'))
+    }
+  }, [])
 
   const handleServiceClick = (serviceId: string) => {
     setSelectedService(serviceId === selectedService ? null : serviceId)
@@ -104,10 +111,12 @@ export function ServiceManagement() {
               <CardDescription>Acceda y modifique la información de los servicios</CardDescription>
             </div>
             <div className="flex gap-2">
-              <ExportOptions data={filteredServices} filename="servicios-hospital" />
-              <Button className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700">
-                <Plus className="mr-2 h-4 w-4" /> Nuevo Servicio
-              </Button>
+              {role !== 'user' && <ExportOptions data={filteredServices} filename="servicios-hospital" />}
+              {role !== 'user' && (
+                <Button className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700">
+                  <Plus className="mr-2 h-4 w-4" /> Nuevo Servicio
+                </Button>
+              )}
             </div>
           </div>
         </CardHeader>

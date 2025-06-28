@@ -1,5 +1,4 @@
-import { NextResponse } from 'next/server';
-import type { NextRequest } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 
 export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
@@ -9,11 +8,9 @@ export function middleware(request: NextRequest) {
     return NextResponse.next();
   }
 
-  // Aquí deberías verificar si el usuario está autenticado
-  // Por simplicidad, vamos a asumir que si no hay una cookie 'auth', no está autenticado
-  const isAuthenticated = request.cookies.get('auth');
-
-  if (!isAuthenticated) {
+  // Ejemplo: redirigir a login si no está autenticado
+  const authCookie = request.cookies.get('auth');
+  if (!authCookie) {
     const loginUrl = request.nextUrl.clone();
     loginUrl.pathname = '/login';
     return NextResponse.redirect(loginUrl);
@@ -23,5 +20,7 @@ export function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ['/((?!_next/static|_next/image|favicon.ico).*)'],
+  matcher: [
+    '/((?!_next|static|favicon.ico|api/auth/login|api/auth/crearusuario|api/auth/logout).*)',
+  ],
 }; 

@@ -44,6 +44,34 @@ export function DashboardOverview() {
     return () => clearInterval(interval)
   }, [])
 
+  // Fetch usuarios activos en tiempo real
+  useEffect(() => {
+    const fetchActiveUsers = async () => {
+      try {
+        const res = await fetch('/api/users/active');
+        const data = await res.json();
+        setStats((prev) => ({ ...prev, activeUsers: data.activeUsers }));
+      } catch (e) {
+        // Silenciar error
+      }
+    };
+    fetchActiveUsers();
+    const interval = setInterval(fetchActiveUsers, 10000);
+    return () => clearInterval(interval);
+  }, []);
+
+  // Mantener lastActiveAt actualizado
+  useEffect(() => {
+    const ping = async () => {
+      try {
+        await fetch('/api/ping');
+      } catch {}
+    };
+    ping();
+    const interval = setInterval(ping, 30000);
+    return () => clearInterval(interval);
+  }, []);
+
   // Get recent activity data
   const recentActivity = [
     {

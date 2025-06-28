@@ -43,6 +43,12 @@ export async function POST(request: NextRequest) {
       console.error('No se pudo registrar el login en AuditLog:', e)
     }
 
+    // Actualizar lastActiveAt
+    await prisma.user.update({
+      where: { id: user.id },
+      data: { lastActiveAt: new Date() },
+    });
+
     // Crear respuesta y setear cookie 'auth'
     const response = NextResponse.json({
       success: true,
