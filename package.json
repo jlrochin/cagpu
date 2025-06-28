@@ -53,6 +53,9 @@
     "framer-motion": "latest",
     "i18next": "^25.2.1",
     "input-otp": "1.4.1",
+    "jose": "^6.0.11",
+    "jspdf": "^3.0.1",
+    "jspdf-autotable": "^5.0.2",
     "lucide-react": "^0.454.0",
     "next": "14.2.16",
     "next-auth": "^4.24.5",
@@ -68,6 +71,7 @@
     "tailwind-merge": "^2.5.5",
     "tailwindcss-animate": "^1.0.7",
     "vaul": "latest",
+    "xlsx": "^0.18.5",
     "zod": "^3.24.1"
   },
   "devDependencies": {

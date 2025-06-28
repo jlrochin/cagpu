@@ -1,6 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { jwtVerify } from 'jose';
 
-export function middleware(request: NextRequest) {
+const JWT_SECRET = process.env.JWT_SECRET || 'supersecreto';
+
+export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
   // Permitir el acceso directo a /login y a las rutas de la API
@@ -8,9 +11,17 @@ export function middleware(request: NextRequest) {
     return NextResponse.next();
   }
 
-  // Ejemplo: redirigir a login si no está autenticado
+  // Validar cookie 'auth' como JWT
   const authCookie = request.cookies.get('auth');
   if (!authCookie) {
+    const loginUrl = request.nextUrl.clone();
+    loginUrl.pathname = '/login';
+    return NextResponse.redirect(loginUrl);
+  }
+
+  try {
+    await jwtVerify(authCookie.value, new TextEncoder().encode(JWT_SECRET));
+  } catch (e) {
     const loginUrl = request.nextUrl.clone();
     loginUrl.pathname = '/login';
     return NextResponse.redirect(loginUrl);

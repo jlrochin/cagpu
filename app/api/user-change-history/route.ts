@@ -5,7 +5,7 @@ export async function GET(request: NextRequest) {
   try {
     const history = await prisma.userChangeHistory.findMany({
       orderBy: { createdAt: 'desc' },
-      take: 20,
+      take: 5,
       include: {
         targetUser: { select: { username: true } },
         performedByUser: { select: { username: true } },

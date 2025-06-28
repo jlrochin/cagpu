@@ -7,8 +7,9 @@ import { Activity, AlertCircle, CheckCircle, Clock, Users } from "lucide-react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Progress } from "@/components/ui/progress"
 import { directionsData, servicesData } from "@/lib/data"
-import { cn } from "@/lib/utils"
+import { cn, formatTimeAgo } from "@/lib/utils"
 import { ScrollArea } from "@/components/ui/scroll-area"
+import { ChangeHistorySummary } from "@/components/change-history"
 
 export function DashboardOverview() {
   const [stats, setStats] = useState({
@@ -18,6 +19,7 @@ export function DashboardOverview() {
     serviceStatus: 0,
     activeUsers: 0,
   })
+  const [userChanges, setUserChanges] = useState<any[]>([])
 
   // Simulate real-time updates
   useEffect(() => {
@@ -71,6 +73,12 @@ export function DashboardOverview() {
     const interval = setInterval(ping, 30000);
     return () => clearInterval(interval);
   }, []);
+
+  useEffect(() => {
+    fetch('/api/user-change-history')
+      .then(res => res.json())
+      .then(data => setUserChanges(data.history || []));
+  }, [])
 
   // Get recent activity data
   const recentActivity = [
@@ -256,32 +264,32 @@ export function DashboardOverview() {
           <Card>
             <CardHeader>
               <CardTitle>Actividad Reciente</CardTitle>
-              <CardDescription>Últimas actualizaciones en los servicios</CardDescription>
+              <CardDescription>Últimas actualizaciones de usuarios</CardDescription>
             </CardHeader>
             <CardContent>
-              <ScrollArea className="h-[300px] pr-4">
-                <div className="space-y-4">
-                  {recentActivity.map((activity, index) => (
-                    <motion.div
-                      key={activity.id}
-                      initial={{ opacity: 0, x: -20 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      transition={{ duration: 0.3, delay: 0.1 * index }}
-                      className="flex items-start"
-                    >
-                      <div className="w-2 h-2 rounded-full bg-blue-500 mt-2 mr-3" />
-                      <div className="flex-1">
-                        <div className="flex justify-between">
-                          <p className="font-medium">{activity.service}</p>
-                          <p className="text-xs text-muted-foreground">{activity.time}</p>
+              <ul className="divide-y divide-muted">
+                {userChanges.length === 0 ? (
+                  <li className="py-4 text-muted-foreground">No hay cambios recientes.</li>
+                ) : (
+                  userChanges.slice(0, 5).map((change) => (
+                    <li key={change.id} className="flex items-center justify-between py-4">
+                      <div className="flex items-center gap-3">
+                        <span className="h-3 w-3 rounded-full bg-blue-500 inline-block" />
+                        <div>
+                          <span className="font-semibold text-foreground">
+                            {formatAction(change.action)}
+                          </span>{' '}
+                          <span className="font-medium text-primary">{change.targetUser?.username || 'Desconocido'}</span>
+                          <div className="text-sm text-muted-foreground">
+                            Por: {change.performedByUser?.username || 'Desconocido'}
+                          </div>
                         </div>
-                        <p className="text-sm text-muted-foreground">{activity.action}</p>
-                        <p className="text-xs text-blue-600 dark:text-blue-400">Por: {activity.user}</p>
                       </div>
-                    </motion.div>
-                  ))}
-                </div>
-              </ScrollArea>
+                      <span className="text-sm text-muted-foreground whitespace-nowrap">{formatTimeAgo(new Date(change.createdAt))}</span>
+                    </li>
+                  ))
+                )}
+              </ul>
             </CardContent>
           </Card>
         </motion.div>
@@ -336,4 +344,12 @@ export function DashboardOverview() {
       </div>
     </div>
   )
+}
+
+function formatAction(action: string): string {
+  if (action === 'activate') return 'Usuario Activado';
+  if (action === 'deactivate') return 'Usuario Desactivado';
+  if (action === 'update') return 'Usuario Modificado';
+  if (action === 'create') return 'Usuario Creado';
+  return action;
 }

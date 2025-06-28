@@ -1,6 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/db'
 import bcrypt from 'bcryptjs'
+import { jwtVerify } from 'jose'
+
+const JWT_SECRET = process.env.JWT_SECRET || 'supersecreto'
 
 export async function PUT(
   request: NextRequest,
@@ -10,11 +13,25 @@ export async function PUT(
     const userId = parseInt(params.id)
     const userData = await request.json()
 
-    // Obtener el id del usuario autenticado desde la cookie
+    // Obtener el usuario autenticado desde el JWT de la cookie
     const authCookie = request.cookies.get('auth')
-    const performedBy = authCookie ? parseInt(authCookie.value) : null
+    let performedBy = null
+    if (authCookie) {
+      try {
+        const { payload } = await jwtVerify(authCookie.value, new TextEncoder().encode(JWT_SECRET))
+        performedBy = payload.id
+      } catch (e) {
+        return NextResponse.json({ error: 'No autenticado' }, { status: 401 })
+      }
+    }
     if (!performedBy) {
       return NextResponse.json({ error: 'No autenticado' }, { status: 401 })
+    }
+
+    // Verificar si el usuario autenticado está activo
+    const authUser = await prisma.user.findUnique({ where: { id: performedBy } })
+    if (!authUser || !authUser.isActive) {
+      return NextResponse.json({ error: 'Usuario inactivo o no encontrado' }, { status: 403 })
     }
 
     // Verificar si el usuario existe

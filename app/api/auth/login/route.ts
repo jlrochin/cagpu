@@ -1,6 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { authenticateUser } from '@/lib/auth'
 import { prisma } from '@/lib/db'
+import { SignJWT } from 'jose'
+
+const JWT_SECRET = process.env.JWT_SECRET || 'supersecreto'
 
 export async function POST(request: NextRequest) {
   try {
@@ -63,9 +66,18 @@ export async function POST(request: NextRequest) {
       },
     })
 
-    // Puedes poner el id, un token, o lo que prefieras
+    // Firmar un JWT con los datos del usuario y guardarlo en la cookie 'auth'
     if (user && user.id) {
-      response.cookies.set('auth', user.id.toString(), {
+      const jwt = await new SignJWT({
+        id: user.id,
+        username: user.username,
+        role: user.role,
+      })
+        .setProtectedHeader({ alg: 'HS256' })
+        .setIssuedAt()
+        .setExpirationTime('1d')
+        .sign(new TextEncoder().encode(JWT_SECRET));
+      response.cookies.set('auth', jwt, {
         httpOnly: true,
         path: '/',
         // secure: true, // solo en producción

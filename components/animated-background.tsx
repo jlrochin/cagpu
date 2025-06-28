@@ -39,29 +39,34 @@ export function AnimatedBackground() {
       'rgba(236,72,153,0.7)'  // rosa
     ]
 
-    // Crear partículas
-    for (let i = 0; i < 80; i++) {
-      const baseX = Math.random() * canvas.width
-      const baseY = Math.random() * canvas.height
-      particles.push({
-        baseX,
-        baseY,
-        x: baseX,
-        y: baseY,
-        size: Math.random() * 14 + 6,
-        color: colors[Math.floor(Math.random() * colors.length)],
-        angle: Math.random() * Math.PI * 2,
-        speed: Math.random() * 1.2 + 0.3
-      })
+    // Crear partículas con distribución uniforme según el tamaño de pantalla
+    const area = canvas.width * canvas.height
+    const density = 0.00003 // valor reducido para menos partículas
+    const numParticles = Math.floor(area * density)
+    const gridSize = Math.ceil(Math.sqrt(numParticles))
+    const cellWidth = canvas.width / gridSize
+    const cellHeight = canvas.height / gridSize
+
+    for (let gx = 0; gx < gridSize; gx++) {
+      for (let gy = 0; gy < gridSize; gy++) {
+        // Posición base en la celda, con un pequeño desplazamiento aleatorio
+        const baseX = gx * cellWidth + cellWidth / 2 + (Math.random() - 0.5) * cellWidth * 0.5
+        const baseY = gy * cellHeight + cellHeight / 2 + (Math.random() - 0.5) * cellHeight * 0.5
+        particles.push({
+          baseX,
+          baseY,
+          x: baseX,
+          y: baseY,
+          size: Math.random() * 14 + 6,
+          color: colors[Math.floor(Math.random() * colors.length)],
+          angle: Math.random() * Math.PI * 2,
+          speed: Math.random() * 1.2 + 0.3
+        })
+      }
     }
 
     // Manejo de eventos
     let mouse = { x: canvas.width / 2, y: canvas.height / 2 }
-    const onMouseMove = (e: MouseEvent) => {
-      mouse.x = e.clientX
-      mouse.y = e.clientY
-    }
-    window.addEventListener('mousemove', onMouseMove)
 
     // Animación
     const animate = () => {
@@ -85,13 +90,9 @@ export function AnimatedBackground() {
         const osc = Math.sin(p.angle) * 18 // amplitud mayor
         const osc2 = Math.cos(p.angle) * 18
 
-        // Parallax
-        const parallaxStrength = 0.015
-        const offsetX = (mouse.x - canvas.width / 2) * parallaxStrength
-        const offsetY = (mouse.y - canvas.height / 2) * parallaxStrength
-
-        p.x = p.baseX + osc + offsetX
-        p.y = p.baseY + osc2 + offsetY
+        // Parallax eliminado, solo movimiento oscilatorio
+        p.x = p.baseX + osc
+        p.y = p.baseY + osc2
 
         ctx.beginPath()
         ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2)
@@ -108,7 +109,6 @@ export function AnimatedBackground() {
 
     return () => {
       window.removeEventListener('resize', resizeCanvas)
-      window.removeEventListener('mousemove', onMouseMove)
     }
   }, [])
 

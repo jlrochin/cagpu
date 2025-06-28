@@ -27,18 +27,48 @@ import { ExportOptions } from "@/components/export-options"
 import type { Service } from "@/lib/types"
 
 export function ServiceManagement() {
+  // 1. Hooks de estado
   const [selectedService, setSelectedService] = useState<string | null>(null)
   const [searchQuery, setSearchQuery] = useState("")
   const [activeFilters, setActiveFilters] = useState<string[]>([])
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid")
   const [modalService, setModalService] = useState<Service | null>(null)
   const [role, setRole] = useState<string | null>(null)
+  const [tipoExport, setTipoExport] = useState("servicios")
+  const [dataExport, setDataExport] = useState<any[]>([])
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
       setRole(localStorage.getItem('role'))
     }
   }, [])
+
+  // 2. Cálculo de filteredServices
+  const filteredServices = servicesData.filter((service) => {
+    const matchesSearch =
+      searchQuery === "" ||
+      service.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      service.responsiblePerson.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      service.location.toLowerCase().includes(searchQuery.toLowerCase())
+
+    const matchesType = activeFilters.length === 0 || activeFilters.includes(service.serviceType)
+    return matchesSearch && matchesType
+  })
+
+  // 3. useEffect que depende de filteredServices
+  useEffect(() => {
+    if (tipoExport === "servicios") {
+      setDataExport(filteredServices)
+    } else if (tipoExport === "usuarios") {
+      fetch("/api/users")
+        .then(res => res.json())
+        .then(data => setDataExport(data || []))
+    } else if (tipoExport === "cambios") {
+      fetch("/api/user-change-history")
+        .then(res => res.json())
+        .then(data => setDataExport(data.history || []))
+    }
+  }, [tipoExport])
 
   const handleServiceClick = (serviceId: string) => {
     setSelectedService(serviceId === selectedService ? null : serviceId)
@@ -52,20 +82,6 @@ export function ServiceManagement() {
     setActiveFilters([])
     setSearchQuery("")
   }
-
-  const filteredServices = servicesData.filter((service) => {
-    // Apply search filter
-    const matchesSearch =
-      searchQuery === "" ||
-      service.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      service.responsiblePerson.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      service.location.toLowerCase().includes(searchQuery.toLowerCase())
-
-    // Apply type filters
-    const matchesType = activeFilters.length === 0 || activeFilters.includes(service.serviceType)
-
-    return matchesSearch && matchesType
-  })
 
   const serviceTypeOptions = [
     { value: "clinical", label: "Clínico" },
@@ -97,6 +113,10 @@ export function ServiceManagement() {
     setModalService(service)
   }
 
+  function handleNewService() {
+    setModalService({} as Service)
+  }
+
   function handleCloseModal() {
     setModalService(null)
   }
@@ -111,9 +131,14 @@ export function ServiceManagement() {
               <CardDescription>Acceda y modifique la información de los servicios</CardDescription>
             </div>
             <div className="flex gap-2">
-              {role !== 'user' && <ExportOptions data={filteredServices} filename="servicios-hospital" />}
               {role !== 'user' && (
-                <Button className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700">
+                <ExportOptions data={filteredServices} filename="servicios-hospital" />
+              )}
+              {role !== 'user' && (
+                <Button 
+                  className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700"
+                  onClick={handleNewService}
+                >
                   <Plus className="mr-2 h-4 w-4" /> Nuevo Servicio
                 </Button>
               )}

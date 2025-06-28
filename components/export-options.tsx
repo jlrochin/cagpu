@@ -2,6 +2,9 @@
 
 import { useState } from "react"
 import { Download, FileSpreadsheet, FileText } from "lucide-react"
+import * as XLSX from "xlsx"
+import jsPDF from "jspdf"
+import autoTable from "jspdf-autotable"
 
 import { Button } from "@/components/ui/button"
 import {
@@ -26,14 +29,55 @@ export function ExportOptions({ data, filename = "servicios" }: ExportOptionsPro
   // Simulate export functionality
   const handleExport = (format: string) => {
     setExportLoading(format)
-    setTimeout(() => {
+    if (format === "excel") {
+      // Exportar a Excel
+      const worksheet = XLSX.utils.json_to_sheet(data)
+      const workbook = XLSX.utils.book_new()
+      XLSX.utils.book_append_sheet(workbook, worksheet, "Datos")
+      XLSX.writeFile(workbook, `${filename}.xlsx`)
       setExportLoading(null)
-      // In a real app, this would trigger the actual download
       toast({
         title: "Exportación completada",
-        description: `Los datos han sido exportados en formato ${format.toUpperCase()} correctamente.`,
+        description: `Los datos han sido exportados en formato EXCEL correctamente.`,
       })
-    }, 1500)
+    } else if (format === "pdf") {
+      // Exportar a PDF
+      const doc = new jsPDF()
+      if (data.length > 0) {
+        const columns = Object.keys(data[0])
+        const rows = data.map((row) => columns.map((col) => row[col]))
+        autoTable(doc, {
+          head: [columns],
+          body: rows,
+          styles: {
+            fontSize: 9,
+            cellPadding: 2,
+            overflow: 'linebreak',
+          },
+          headStyles: {
+            fillColor: [41, 128, 185], // azul corporativo
+            textColor: 255,
+            fontStyle: 'bold',
+            halign: 'center',
+          },
+          columnStyles: {
+            description: { cellWidth: 50 },
+            name: { cellWidth: 30 },
+            location: { cellWidth: 30 },
+            responsiblePerson: { cellWidth: 35 },
+          },
+          tableWidth: 'auto',
+        })
+      } else {
+        doc.text("No hay datos para exportar", 10, 10)
+      }
+      doc.save(`${filename}.pdf`)
+      setExportLoading(null)
+      toast({
+        title: "Exportación completada",
+        description: `Los datos han sido exportados en formato PDF correctamente.`,
+      })
+    }
   }
 
   return (
