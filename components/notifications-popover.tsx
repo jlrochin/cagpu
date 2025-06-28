@@ -6,69 +6,58 @@ import { motion, AnimatePresence } from "framer-motion"
 
 import { Button } from "@/components/ui/button"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
-import { type Notification, generateNotifications } from "@/lib/notifications"
 import { cn, formatTimeAgo } from "@/lib/utils"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle, DrawerTrigger } from "@/components/ui/drawer"
 import { useMediaQuery } from "@/hooks/use-media-query"
 
 export function NotificationsPopover() {
-  const [notifications, setNotifications] = useState<Notification[]>([])
+  const [notifications, setNotifications] = useState<any[]>([])
   const [unreadCount, setUnreadCount] = useState(0)
   const [open, setOpen] = useState(false)
   const isDesktop = useMediaQuery("(min-width: 768px)")
 
-  // Initialize notifications
+  // Cargar notificaciones reales
   useEffect(() => {
-    setNotifications(generateNotifications(5))
-    setUnreadCount(5)
+    fetch('/api/notifications')
+      .then(res => res.json())
+      .then(data => {
+        setNotifications(data.notifications || [])
+        setUnreadCount((data.notifications || []).filter((n: any) => !n.isRead).length)
+      })
   }, [])
 
-  // Simulate new notifications every 30 seconds
-  useEffect(() => {
-    const interval = setInterval(() => {
-      const newNotification = generateNotifications(1)[0]
-      setNotifications((prev) => [newNotification, ...prev.slice(0, 9)])
-      setUnreadCount((prev) => prev + 1)
-    }, 30000)
-
-    return () => clearInterval(interval)
-  }, [])
-
-  const markAllAsRead = () => {
-    setNotifications((prev) => prev.map((notification) => ({ ...notification, read: true })))
+  const markAllAsRead = async () => {
+    const unread = notifications.filter(n => !n.isRead)
+    await Promise.all(unread.map(n => fetch('/api/notifications', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id: n.id })
+    })))
+    setNotifications(prev => prev.map(n => ({ ...n, isRead: true })))
     setUnreadCount(0)
   }
 
-  const markAsRead = (id: string) => {
-    setNotifications((prev) =>
-      prev.map((notification) => {
-        if (notification.id === id && !notification.read) {
-          setUnreadCount((count) => count - 1)
-          return { ...notification, read: true }
-        }
-        return notification
-      }),
-    )
+  const markAsRead = async (id: number) => {
+    await fetch('/api/notifications', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id })
+    })
+    setNotifications(prev => prev.map(n => n.id === id ? { ...n, isRead: true } : n))
+    setUnreadCount(count => count - 1)
   }
 
-  const deleteNotification = (id: string) => {
-    setNotifications((prev) => {
-      const notification = prev.find((n) => n.id === id)
-      if (notification && !notification.read) {
-        setUnreadCount((count) => count - 1)
-      }
-      return prev.filter((n) => n.id !== id)
-    })
+  const deleteNotification = (id: number) => {
+    setNotifications(prev => prev.filter(n => n.id !== id))
+    setUnreadCount(count => count - 1)
   }
 
   const handleOpen = (value: boolean) => {
     setOpen(value)
     if (value) {
-      // Mark as read when opened after a delay
-      setTimeout(() => {
-        markAllAsRead()
-      }, 3000)
+      // Opcional: marcar todas como leídas al abrir después de un tiempo
+      // setTimeout(() => { markAllAsRead() }, 3000)
     }
   }
 
@@ -97,27 +86,27 @@ export function NotificationsPopover() {
                 transition={{ duration: 0.2 }}
                 className={cn(
                   "relative p-4 hover:bg-muted/50 transition-colors",
-                  !notification.read && "bg-blue-50 dark:bg-blue-950/20",
+                  !notification.isRead && "bg-blue-50 dark:bg-blue-950/20",
                 )}
               >
                 <div className="flex items-start gap-3 pr-8">
                   <div
                     className={cn(
                       "w-2 h-2 rounded-full mt-2 flex-shrink-0",
-                      notification.read ? "bg-gray-300" : "bg-blue-500",
+                      notification.isRead ? "bg-gray-300" : "bg-blue-500",
                     )}
                   />
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-medium">{notification.title}</p>
                     <p className="text-sm text-muted-foreground break-words">{notification.message}</p>
-                    <p className="text-xs text-muted-foreground mt-1">{formatTimeAgo(notification.timestamp)}</p>
+                    <p className="text-xs text-muted-foreground mt-1">{formatTimeAgo(new Date(notification.createdAt))}</p>
                   </div>
                 </div>
                 <div className="absolute top-3 right-3 flex gap-1">
-                  {!notification.read && (
+                  {!notification.isRead && (
                     <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => markAsRead(notification.id)}>
                       <Check className="h-3.5 w-3.5" />
-                      <span className="sr-only">Mark as read</span>
+                      <span className="sr-only">Marcar como leído</span>
                     </Button>
                   )}
                   <Button
@@ -127,7 +116,7 @@ export function NotificationsPopover() {
                     onClick={() => deleteNotification(notification.id)}
                   >
                     <X className="h-3.5 w-3.5" />
-                    <span className="sr-only">Delete</span>
+                    <span className="sr-only">Eliminar</span>
                   </Button>
                 </div>
               </motion.li>
@@ -162,7 +151,7 @@ export function NotificationsPopover() {
                 </motion.div>
               )}
             </AnimatePresence>
-            <span className="sr-only">Notifications</span>
+            <span className="sr-only">Notificaciones</span>
           </Button>
         </PopoverTrigger>
         <PopoverContent className="w-[380px] p-0" align="end">
@@ -189,7 +178,7 @@ export function NotificationsPopover() {
               </motion.div>
             )}
           </AnimatePresence>
-          <span className="sr-only">Notifications</span>
+          <span className="sr-only">Notificaciones</span>
         </Button>
       </DrawerTrigger>
       <DrawerContent>
