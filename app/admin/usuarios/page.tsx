@@ -200,11 +200,15 @@ export default function AdminUsuariosPage() {
         return;
       }
       toast.success(data.message);
+      // Actualizar la lista de usuarios localmente
+      setUsers(users.map(u => u.id === confirmUser.id ? { ...u, isActive: !u.isActive } : u));
       setConfirmUser(null);
       setConfirmLoading(false);
-      // Forzar refresh de la página para actualizar el estado
-      window.location.reload();
+      
+      // Forzar actualización de notificaciones disparando un evento personalizado
+      window.dispatchEvent(new CustomEvent('notificationsUpdate'));
     } catch (err) {
+      console.error('Error al cambiar estado del usuario:', err);
       toast.error('Error de red');
       setConfirmLoading(false);
     }

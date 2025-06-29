@@ -1,14 +1,25 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
+import { jwtVerify } from 'jose';
+
+const JWT_SECRET = process.env.JWT_SECRET || 'supersecreto';
 
 // Obtener notificaciones del usuario autenticado
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
     const showAll = searchParams.get('all') === '1';
-    // Obtener el id del usuario autenticado desde la cookie
+    // Obtener el usuario autenticado desde el JWT de la cookie
     const authCookie = request.cookies.get('auth');
-    const userId = authCookie ? parseInt(authCookie.value) : null;
+    let userId = null;
+    if (authCookie) {
+      try {
+        const { payload } = await jwtVerify(authCookie.value, new TextEncoder().encode(JWT_SECRET));
+        userId = payload.id as number;
+      } catch (e) {
+        return NextResponse.json({ error: 'No autenticado' }, { status: 401 });
+      }
+    }
     if (!userId) {
       return NextResponse.json({ error: 'No autenticado' }, { status: 401 });
     }
@@ -18,26 +29,34 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Usuario no encontrado' }, { status: 404 });
     }
     let notifications;
-    const baseWhere = user.role === 'admin' || user.role === 'developer'
-      ? {
-          OR: [
-            { title: { not: { contains: 'login' } } },
-            { title: { not: { contains: 'logout' } } },
-          ],
-        }
-      : {
-          userId,
-          OR: [
-            { title: { not: { contains: 'login' } } },
-            { title: { not: { contains: 'logout' } } },
-          ],
-        };
+    let baseWhere;
+    
+    if (user.role === 'admin' || user.role === 'developer') {
+      // Los administradores ven todas las notificaciones
+      baseWhere = {
+        AND: [
+          { title: { not: { contains: 'login' } } },
+          { title: { not: { contains: 'logout' } } },
+        ]
+      };
+    } else {
+      // Los usuarios normales solo ven sus notificaciones
+      baseWhere = {
+        userId,
+        AND: [
+          { title: { not: { contains: 'login' } } },
+          { title: { not: { contains: 'logout' } } },
+        ]
+      };
+    }
+    
     const where = showAll ? baseWhere : { ...baseWhere, isRead: false };
     notifications = await prisma.notification.findMany({
       where,
       orderBy: { createdAt: 'desc' },
       take: user.role === 'admin' || user.role === 'developer' ? 50 : 20,
     });
+    
     return NextResponse.json({ notifications });
   } catch (error) {
     console.error('Error al obtener notificaciones:', error);
@@ -49,9 +68,17 @@ export async function GET(request: NextRequest) {
 export async function PATCH(request: NextRequest) {
   try {
     const { id } = await request.json();
-    // Obtener el id del usuario autenticado desde la cookie
+    // Obtener el usuario autenticado desde el JWT de la cookie
     const authCookie = request.cookies.get('auth');
-    const userId = authCookie ? parseInt(authCookie.value) : null;
+    let userId = null;
+    if (authCookie) {
+      try {
+        const { payload } = await jwtVerify(authCookie.value, new TextEncoder().encode(JWT_SECRET));
+        userId = payload.id as number;
+      } catch (e) {
+        return NextResponse.json({ error: 'No autenticado' }, { status: 401 });
+      }
+    }
     if (!userId) {
       return NextResponse.json({ error: 'No autenticado' }, { status: 401 });
     }

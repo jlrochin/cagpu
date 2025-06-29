@@ -27,13 +27,34 @@ export function NotificationsPopover() {
         .then(res => res.json())
         .then(data => {
           if (!isMounted) return;
-          setNotifications(data.notifications || [])
-          setUnreadCount((data.notifications || []).length)
+          const notificationsList = data.notifications || [];
+          setNotifications(notificationsList);
+          setUnreadCount(notificationsList.filter(n => !n.isRead).length);
         })
+        .catch(error => {
+          console.error('Error al cargar notificaciones:', error);
+        });
     }
+    
     fetchNotifications();
-    const interval = setInterval(fetchNotifications, 15000); // cada 15 segundos
-    return () => { isMounted = false; clearInterval(interval); }
+    const interval = setInterval(fetchNotifications, 5000); // cada 5 segundos para mejor responsividad
+    
+    // Escuchar evento personalizado para actualizar notificaciones inmediatamente
+    const handleNotificationUpdate = () => {
+      fetchNotifications();
+    };
+    
+    if (typeof window !== 'undefined') {
+      window.addEventListener('notificationsUpdate', handleNotificationUpdate);
+    }
+    
+    return () => { 
+      isMounted = false; 
+      clearInterval(interval);
+      if (typeof window !== 'undefined') {
+        window.removeEventListener('notificationsUpdate', handleNotificationUpdate);
+      }
+    }
   }, [])
 
   const markAllAsRead = async () => {

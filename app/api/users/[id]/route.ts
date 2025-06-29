@@ -132,11 +132,25 @@ export async function PATCH(
     const userId = parseInt(params.id)
     const { action } = await request.json()
 
-    // Obtener el id del usuario autenticado desde la cookie
+    // Obtener el usuario autenticado desde el JWT de la cookie
     const authCookie = request.cookies.get('auth')
-    const performedBy = authCookie ? parseInt(authCookie.value) : null
+    let performedBy = null
+    if (authCookie) {
+      try {
+        const { payload } = await jwtVerify(authCookie.value, new TextEncoder().encode(JWT_SECRET))
+        performedBy = payload.id as number
+      } catch (e) {
+        return NextResponse.json({ error: 'No autenticado' }, { status: 401 })
+      }
+    }
     if (!performedBy) {
       return NextResponse.json({ error: 'No autenticado' }, { status: 401 })
+    }
+
+    // Verificar si el usuario autenticado está activo
+    const authUser = await prisma.user.findUnique({ where: { id: performedBy } })
+    if (!authUser || !authUser.isActive) {
+      return NextResponse.json({ error: 'Usuario inactivo o no encontrado' }, { status: 403 })
     }
 
     // No permitir que un usuario se desactive a sí mismo
@@ -203,6 +217,7 @@ export async function PATCH(
 
     // Obtener el usuario que realiza la acción
     const adminUser = await prisma.user.findUnique({ where: { id: performedBy } });
+    
     // Crear notificación para el usuario afectado
     await prisma.notification.create({
       data: {
@@ -211,7 +226,32 @@ export async function PATCH(
         message: `El usuario ${existingUser.username} fue ${actionType === 'deactivate' ? 'desactivado' : 'activado'} por ${adminUser?.username || 'un administrador'}.`,
         isRead: false,
       },
-    })
+    });
+
+    // Crear notificaciones para todos los administradores activos (excepto el que realizó la acción y el usuario afectado)
+    const admins = await prisma.user.findMany({
+      where: {
+        role: 'admin',
+        isActive: true,
+        id: { 
+          notIn: [performedBy, userId] // Excluir tanto al admin que realizó la acción como al usuario afectado
+        },
+      },
+    });
+
+    // Crear notificaciones para los administradores
+    const adminNotifications = admins.map(admin => ({
+      userId: admin.id,
+      title: actionType === 'deactivate' ? 'Usuario desactivado' : 'Usuario activado',
+      message: `El usuario ${existingUser.username} fue ${actionType === 'deactivate' ? 'desactivado' : 'activado'} por ${adminUser?.username || 'un administrador'}.`,
+      isRead: false,
+    }));
+
+    if (adminNotifications.length > 0) {
+      await prisma.notification.createMany({
+        data: adminNotifications,
+      });
+    }
 
     return NextResponse.json({
       success: true,
