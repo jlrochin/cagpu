@@ -91,21 +91,11 @@ export default function Login() {
               <Card className="backdrop-blur-md bg-white/30 dark:bg-zinc-900/30 border-white/20 dark:border-zinc-700/30 shadow-2xl">
                 <CardHeader className="text-center space-y-2">
                   <div className="flex justify-center mb-4">
-                    <div className="h-16 w-16 rounded-full bg-gradient-to-r from-blue-600 to-indigo-600 flex items-center justify-center shadow-lg">
-                      <svg
-                        className="h-8 w-8 text-white"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
-                        />
-                      </svg>
-                    </div>
+                    <img
+                      src="/cagpu_logo_new.png"
+                      alt="CAGPU Logo"
+                      className="h-32 w-auto max-w-72"
+                    />
                   </div>
                   <CardTitle className="text-2xl font-bold text-gray-900 dark:text-gray-100">
                     CAGPU

@@ -1,6 +1,6 @@
 "use client"
 
-import { ClipboardList, Menu, Settings, User } from "lucide-react"
+import { Menu, Settings, User } from "lucide-react"
 import Link from "next/link"
 import { usePathname, useRouter } from "next/navigation"
 import { useEffect, useState } from "react"
@@ -57,9 +57,11 @@ export function Header() {
     <header className="sticky top-0 z-10 w-full border-b bg-background">
       <div className="container flex h-16 items-center justify-between px-4">
         <div className="flex items-center gap-2 md:gap-4">
-          <div className="h-8 w-8 rounded-full bg-blue-600 flex items-center justify-center !cursor-pointer">
-            <ClipboardList className="h-4 w-4 text-white" />
-          </div>
+          <img 
+            src="/logo_cagpu_sintexto.png" 
+            alt="CAGPU Logo" 
+            className="h-8 w-8 object-contain !cursor-pointer"
+          />
           <span className="font-semibold text-foreground hidden md:inline-block text-sm md:text-base">CAGPU</span>
           <span className="text-xs text-muted-foreground hidden lg:inline-block">
             Catálogo de Atención Generalizada a la Población Usuaria

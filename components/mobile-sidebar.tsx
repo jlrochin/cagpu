@@ -1,7 +1,7 @@
 "use client"
 
 import { directionsData } from "@/lib/data"
-import { ChevronRight, ClipboardList, LayoutDashboard, Settings, User } from "lucide-react"
+import { ChevronRight, LayoutDashboard, Settings, User, Grid3x3 } from "lucide-react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 
@@ -11,9 +11,11 @@ export function MobileSidebar() {
   return (
     <div className="h-full py-6 px-4 bg-background">
       <div className="flex items-center gap-2 mb-8">
-        <div className="h-8 w-8 rounded-full bg-blue-600 flex items-center justify-center">
-          <ClipboardList className="h-4 w-4 text-white" />
-        </div>
+        <img 
+          src="/logo_cagpu_sintexto.png" 
+          alt="CAGPU Logo" 
+          className="h-8 w-8 object-contain"
+        />
         <div>
           <span className="font-semibold text-foreground">CAGPU</span>
           <p className="text-xs text-muted-foreground">Catálogo de Atención</p>
@@ -39,7 +41,7 @@ export function MobileSidebar() {
           }`}
         >
           <div className="flex items-center gap-2">
-            <ClipboardList className="h-4 w-4" />
+            <Grid3x3 className="h-4 w-4" />
             <span>Servicios</span>
           </div>
           <ChevronRight className="h-4 w-4 text-muted-foreground" />
