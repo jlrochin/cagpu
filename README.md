@@ -1,6 +1,6 @@
 # CAGPU - Catálogo de Atención
 
-Sistema de gestión de servicios hospitalarios desarrollado con Next.js, PostgreSQL y Docker.
+Sistema de gestión de servicios hospitalarios desarrollado con Next.js y PostgreSQL.
 
 ## 🚀 Características
 
@@ -10,7 +10,6 @@ Sistema de gestión de servicios hospitalarios desarrollado con Next.js, Postgre
 - **Catálogo de direcciones y servicios** médicos
 - **Sistema de notificaciones** en tiempo real
 - **Interfaz responsive** con tema claro/oscuro
-- **Containerizado con Docker** para fácil despliegue
 
 ## 🛠️ Tecnologías
 
@@ -19,73 +18,76 @@ Sistema de gestión de servicios hospitalarios desarrollado con Next.js, Postgre
 - **Base de datos**: PostgreSQL 15
 - **ORM**: Prisma
 - **Autenticación**: bcryptjs
-- **Containerización**: Docker & Docker Compose
 - **Gestión de paquetes**: pnpm
 
 ## 📋 Prerrequisitos
 
-- Docker y Docker Compose instalados
-- Node.js 18+ (para desarrollo local)
-- pnpm (para desarrollo local)
+- Node.js 18+ instalado
+- pnpm instalado
+- PostgreSQL 15+ instalado y configurado
 
-## 🐳 Ejecutar con Docker
+## 🚀 Instalación y Configuración
 
 ### 1. Clonar el repositorio
+
 ```bash
 git clone <tu-repositorio>
 cd cagpu
 ```
 
-### 2. Generar script de inicialización de base de datos
-```bash
-node scripts/init-db.js
-```
+### 2. Instalar dependencias
 
-### 3. Ejecutar con Docker Compose
-```bash
-docker-compose up -d
-```
-
-### 4. Acceder a la aplicación
-- **Aplicación**: http://localhost:3000
-- **pgAdmin**: http://localhost:5050
-  - Email: admin@cagpu.com
-  - Contraseña: admin123
-
-### 5. Credenciales de prueba
-- **Admin**: admin / admin123
-- **Usuario**: user / user123
-
-## 🔧 Desarrollo Local
-
-### 1. Instalar dependencias
 ```bash
 pnpm install
 ```
 
-### 2. Configurar variables de entorno
+### 3. Configurar la base de datos PostgreSQL
+
+Crear una base de datos llamada `cagpu_db` en PostgreSQL:
+
+```sql
+CREATE DATABASE cagpu_db;
+CREATE USER cagpu_user WITH PASSWORD 'cagpu_password';
+GRANT ALL PRIVILEGES ON DATABASE cagpu_db TO cagpu_user;
+```
+
+### 4. Configurar variables de entorno
+
 Crear archivo `.env.local`:
+
 ```env
 DATABASE_URL="postgresql://cagpu_user:cagpu_password@localhost:5432/cagpu_db"
 NEXTAUTH_SECRET="your-secret-key-here"
 NEXTAUTH_URL="http://localhost:3000"
 ```
 
-### 3. Ejecutar base de datos
+### 5. Generar script de inicialización de base de datos
+
 ```bash
-docker-compose up postgres -d
+node scripts/init-db.js
 ```
 
-### 4. Configurar Prisma
+### 6. Configurar Prisma
+
 ```bash
 pnpm prisma generate
 pnpm prisma db push
 ```
 
-### 5. Ejecutar aplicación
+### 7. Ejecutar aplicación
+
 ```bash
 pnpm dev
 ```
+
+### 8. Acceder a la aplicación
+
+- **Aplicación**: http://localhost:3000
+
+### 9. Credenciales de prueba
+
+- **Admin**: admin / admin123
+- **Usuario**: user / user123
 
 ## 📁 Estructura del Proyecto
 
@@ -106,21 +108,21 @@ cagpu/
 ├── prisma/               # Esquema de base de datos
 │   └── schema.prisma
 ├── scripts/              # Scripts de utilidad
-├── Dockerfile            # Configuración de Docker
-├── docker-compose.yml    # Orquestación de servicios
 └── ...
 ```
 
 ## 🗄️ Base de Datos
 
 ### Tablas principales:
+
 - **users**: Usuarios del sistema
 - **directions**: Direcciones hospitalarias
 - **services**: Servicios médicos
 - **notifications**: Notificaciones del sistema
 
 ### Conexión:
-- **Host**: localhost (desarrollo) / postgres (Docker)
+
+- **Host**: localhost
 - **Puerto**: 5432
 - **Base de datos**: cagpu_db
 - **Usuario**: cagpu_user
@@ -131,37 +133,39 @@ cagpu/
 El sistema utiliza autenticación basada en sesiones con bcrypt para el hash de contraseñas.
 
 ### Roles:
+
 - **admin**: Acceso completo al sistema
 - **user**: Acceso limitado a funcionalidades básicas
 
 ## 🚀 Comandos Útiles
 
 ```bash
-# Ejecutar aplicación en Docker
-docker-compose up -d
+# Ejecutar aplicación en desarrollo
+pnpm dev
 
-# Ver logs
-docker-compose logs -f app
+# Construir aplicación para producción
+pnpm build
 
-# Detener servicios
-docker-compose down
-
-# Reconstruir imagen
-docker-compose build --no-cache
+# Ejecutar aplicación en producción
+pnpm start
 
 # Acceder a la base de datos
-docker-compose exec postgres psql -U cagpu_user -d cagpu_db
+psql -U cagpu_user -d cagpu_db -h localhost
 
 # Ejecutar migraciones de Prisma
 pnpm prisma migrate dev
 
 # Generar cliente de Prisma
 pnpm prisma generate
+
+# Abrir Prisma Studio
+pnpm prisma studio
 ```
 
 ## 🔧 Configuración de Producción
 
 ### Variables de entorno recomendadas:
+
 ```env
 NODE_ENV=production
 DATABASE_URL="postgresql://user:password@host:5432/database"
@@ -170,6 +174,7 @@ NEXTAUTH_URL="https://your-domain.com"
 ```
 
 ### Optimizaciones:
+
 - Usar un proxy reverso (nginx)
 - Configurar SSL/TLS
 - Implementar rate limiting
@@ -177,10 +182,10 @@ NEXTAUTH_URL="https://your-domain.com"
 
 ## 📝 Notas de Desarrollo
 
-- La aplicación está configurada para usar `output: 'standalone'` en Next.js para optimizar el tamaño del contenedor
-- Se incluye pgAdmin para administración de base de datos (opcional)
-- Los datos iniciales se cargan automáticamente al iniciar el contenedor
+- La aplicación utiliza Next.js 14 con App Router
+- Los datos iniciales se cargan automáticamente al ejecutar el script de inicialización
 - El sistema de autenticación está preparado para JWT (pendiente de implementar)
+- Se puede usar Prisma Studio para administrar la base de datos de manera visual
 
 ## 🤝 Contribuir
 
@@ -192,4 +197,4 @@ NEXTAUTH_URL="https://your-domain.com"
 
 ## 📄 Licencia
 
-Este proyecto está bajo la Licencia MIT - ver el archivo [LICENSE](LICENSE) para más detalles. 
+Este proyecto está bajo la Licencia MIT - ver el archivo [LICENSE](LICENSE) para más detalles.
