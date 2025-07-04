@@ -1,4 +1,4 @@
-const bcrypt = require('bcryptjs');
+const bcrypt = require("bcryptjs");
 
 // Función para generar hash de contraseña
 async function hashPassword(password) {
@@ -8,9 +8,9 @@ async function hashPassword(password) {
 
 // Función para generar el script SQL con contraseñas hasheadas
 async function generateInitScript() {
-  const adminPassword = await hashPassword('admin123');
-  const userPassword = await hashPassword('user123');
-  
+  const adminPassword = await hashPassword("admin123");
+  const userPassword = await hashPassword("user123");
+
   const sqlScript = `
 -- Crear tabla de usuarios
 CREATE TABLE users (
@@ -103,15 +103,15 @@ CREATE INDEX idx_notifications_created_at ON notifications(created_at);
 
 // Ejecutar el script
 generateInitScript()
-  .then(sql => {
-    console.log('Script SQL generado:');
+  .then((sql) => {
+    console.log("Script SQL generado:");
     console.log(sql);
-    
+
     // Escribir el archivo
-    const fs = require('fs');
-    fs.writeFileSync('init-db.sql', sql);
-    console.log('\nArchivo init-db.sql creado exitosamente');
+    const fs = require("fs");
+    fs.writeFileSync("init-db.sql", sql);
+    console.log("\nArchivo init-db.sql creado exitosamente");
   })
-  .catch(error => {
-    console.error('Error:', error);
-  }); 
+  .catch((error) => {
+    console.error("Error:", error);
+  });
