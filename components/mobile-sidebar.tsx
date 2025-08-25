@@ -1,6 +1,6 @@
 "use client"
 
-import { directionsData } from "@/lib/data"
+// Removed hardcoded data import - now uses database data
 import { ChevronRight, LayoutDashboard, Settings, User, Grid3x3 } from "lucide-react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"

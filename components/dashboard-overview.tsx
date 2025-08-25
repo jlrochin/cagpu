@@ -6,7 +6,7 @@ import { Activity, AlertCircle, CheckCircle, Clock, Users } from "lucide-react"
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Progress } from "@/components/ui/progress"
-import { directionsData, servicesData } from "@/lib/data"
+// Removed hardcoded data import - now uses database data
 import { cn, formatTimeAgo } from "@/lib/utils"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { ChangeHistorySummary } from "@/components/change-history"
@@ -20,17 +20,38 @@ export function DashboardOverview() {
     activeUsers: 0,
   })
   const [userChanges, setUserChanges] = useState<any[]>([])
+  const [directionsData, setDirectionsData] = useState<any[]>([])
+  const [servicesData, setServicesData] = useState<any[]>([])
 
-  // Simulate real-time updates
+  // Load data from database
   useEffect(() => {
-    // Initial stats
-    setStats({
-      activeServices: servicesData.length,
-      pendingUpdates: Math.floor(Math.random() * 5) + 2,
-      recentChanges: Math.floor(Math.random() * 10) + 5,
-      serviceStatus: Math.floor(Math.random() * 30) + 70, // 70-100%
-      activeUsers: Math.floor(Math.random() * 5) + 3,
-    })
+    const fetchData = async () => {
+      try {
+        const [servicesRes, directionsRes] = await Promise.all([
+          fetch('/api/services'),
+          fetch('/api/directions')
+        ])
+
+        const services = await servicesRes.json()
+        const directions = await directionsRes.json()
+
+        setServicesData(services)
+        setDirectionsData(directions)
+
+        // Initial stats
+        setStats({
+          activeServices: services.length,
+          pendingUpdates: Math.floor(Math.random() * 5) + 2,
+          recentChanges: Math.floor(Math.random() * 10) + 5,
+          serviceStatus: Math.floor(Math.random() * 30) + 70, // 70-100%
+          activeUsers: Math.floor(Math.random() * 5) + 3,
+        })
+      } catch (error) {
+        console.error('Error loading data:', error)
+      }
+    }
+
+    fetchData()
 
     // Update stats periodically
     const interval = setInterval(() => {
@@ -67,7 +88,7 @@ export function DashboardOverview() {
     const ping = async () => {
       try {
         await fetch('/api/ping');
-      } catch {}
+      } catch { }
     };
     ping();
     const interval = setInterval(ping, 30000);
@@ -79,47 +100,6 @@ export function DashboardOverview() {
       .then(res => res.json())
       .then(data => setUserChanges(data.history || []));
   }, [])
-
-  // Get recent activity data
-  const recentActivity = [
-    {
-      id: 1,
-      service: "Cardiología",
-      action: "Actualización de responsable",
-      time: "hace 10 minutos",
-      user: "Dr. García",
-    },
-    {
-      id: 2,
-      service: "Enfermería de Urgencias",
-      action: "Cambio de extensión",
-      time: "hace 25 minutos",
-      user: "Lic. Rodríguez",
-    },
-    {
-      id: 3,
-      service: "Recursos Humanos",
-      action: "Actualización de ubicación",
-      time: "hace 1 hora",
-      user: "Lic. Martínez",
-    },
-    {
-      id: 4,
-      service: "Investigación Clínica",
-      action: "Modificación de descripción",
-      time: "hace 2 horas",
-      user: "Dr. López",
-    },
-    { id: 5, service: "Pediatría", action: "Cambio de responsable", time: "hace 3 horas", user: "Dra. Sánchez" },
-    { id: 6, service: "Finanzas", action: "Actualización de extensión", time: "hace 4 horas", user: "C.P. Ramírez" },
-  ]
-
-  const upcomingTasks = [
-    { id: 1, title: "Revisión de servicios clínicos", dueDate: "Hoy", priority: "high" },
-    { id: 2, title: "Actualización de extensiones telefónicas", dueDate: "Mañana", priority: "medium" },
-    { id: 3, title: "Verificación de ubicaciones", dueDate: "En 2 días", priority: "low" },
-    { id: 4, title: "Actualización de responsables", dueDate: "En 3 días", priority: "medium" },
-  ]
 
   return (
     <div className="space-y-6">
@@ -254,7 +234,7 @@ export function DashboardOverview() {
         </motion.div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 gap-6">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -264,7 +244,7 @@ export function DashboardOverview() {
           <Card>
             <CardHeader>
               <CardTitle>Actividad Reciente</CardTitle>
-              <CardDescription>Últimas actualizaciones de usuarios</CardDescription>
+              <CardDescription>Últimas actualizaciones de usuarios y servicios</CardDescription>
             </CardHeader>
             <CardContent>
               <ul className="divide-y divide-muted">
@@ -279,10 +259,21 @@ export function DashboardOverview() {
                           <span className="font-semibold text-foreground">
                             {formatAction(change.action)}
                           </span>{' '}
-                          <span className="font-medium text-primary">{change.targetUser?.username || 'Desconocido'}</span>
+                          {change.action?.includes('service') ? (
+                            <span className="font-medium text-primary">
+                              {change.details?.split('"')[1] || 'Servicio'}
+                            </span>
+                          ) : (
+                            <span className="font-medium text-primary">{change.targetUser?.username || 'Desconocido'}</span>
+                          )}
                           <div className="text-sm text-muted-foreground">
                             Por: {change.performedByUser?.username || 'Desconocido'}
                           </div>
+                          {change.details && !change.details.startsWith('Usuario actualizado: {') && (
+                            <div className="text-xs text-muted-foreground mt-1 bg-muted/30 p-1 rounded">
+                              {change.details}
+                            </div>
+                          )}
                         </div>
                       </div>
                       <span className="text-sm text-muted-foreground whitespace-nowrap">{formatTimeAgo(new Date(change.createdAt))}</span>
@@ -290,54 +281,6 @@ export function DashboardOverview() {
                   ))
                 )}
               </ul>
-            </CardContent>
-          </Card>
-        </motion.div>
-
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.3, delay: 0.7 }}
-          className="lg:col-span-1"
-        >
-          <Card>
-            <CardHeader>
-              <CardTitle>Tareas Pendientes</CardTitle>
-              <CardDescription>Próximas actividades programadas</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <ScrollArea className="h-[300px] pr-4">
-                <div className="space-y-3">
-                  {upcomingTasks.map((task, index) => (
-                    <motion.div
-                      key={task.id}
-                      initial={{ opacity: 0, x: 20 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      transition={{ duration: 0.3, delay: 0.1 * index }}
-                      className="p-3 rounded-lg border bg-card"
-                    >
-                      <div className="flex items-start justify-between">
-                        <div className="flex-1">
-                          <p className="font-medium">{task.title}</p>
-                          <p className="text-xs text-muted-foreground">Vence: {task.dueDate}</p>
-                        </div>
-                        <div
-                          className={cn(
-                            "px-2 py-1 rounded-full text-xs font-medium",
-                            task.priority === "high"
-                              ? "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300"
-                              : task.priority === "medium"
-                                ? "bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-300"
-                                : "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300",
-                          )}
-                        >
-                          {task.priority === "high" ? "Alta" : task.priority === "medium" ? "Media" : "Baja"}
-                        </div>
-                      </div>
-                    </motion.div>
-                  ))}
-                </div>
-              </ScrollArea>
             </CardContent>
           </Card>
         </motion.div>
@@ -351,5 +294,7 @@ function formatAction(action: string): string {
   if (action === 'deactivate') return 'Usuario Desactivado';
   if (action === 'update') return 'Usuario Modificado';
   if (action === 'create') return 'Usuario Creado';
+  if (action === 'service_create') return 'Servicio Creado';
+  if (action === 'service_update') return 'Servicio Actualizado';
   return action;
 }

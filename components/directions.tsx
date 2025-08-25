@@ -1,10 +1,10 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { motion } from "framer-motion"
 import { ChevronDown } from "lucide-react"
 
-import { directionsData, servicesData } from "@/lib/data"
+// Removed hardcoded data import - now uses database data
 import { cn } from "@/lib/utils"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion"
@@ -13,6 +13,33 @@ import { ServiceForm } from "@/components/service-form"
 export function Directions() {
   const [selectedDirection, setSelectedDirection] = useState<string | null>(null)
   const [selectedService, setSelectedService] = useState<string | null>(null)
+  const [directionsData, setDirectionsData] = useState<any[]>([])
+  const [servicesData, setServicesData] = useState<any[]>([])
+  const [loading, setLoading] = useState(true)
+
+  // Load data from database
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const [servicesRes, directionsRes] = await Promise.all([
+          fetch('/api/services'),
+          fetch('/api/directions')
+        ])
+
+        const services = await servicesRes.json()
+        const directions = await directionsRes.json()
+
+        setServicesData(services)
+        setDirectionsData(directions)
+        setLoading(false)
+      } catch (error) {
+        console.error('Error loading data:', error)
+        setLoading(false)
+      }
+    }
+
+    fetchData()
+  }, [])
 
   const handleDirectionClick = (directionId: string) => {
     setSelectedDirection(directionId === selectedDirection ? null : directionId)
@@ -26,6 +53,15 @@ export function Directions() {
   const filteredServices = selectedDirection
     ? servicesData.filter((service) => service.directionId === selectedDirection)
     : []
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center py-12">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+        <span className="ml-2 text-muted-foreground">Cargando direcciones...</span>
+      </div>
+    )
+  }
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -51,7 +87,7 @@ export function Directions() {
             </CardHeader>
             <CardContent>
               <div className="flex justify-between items-center">
-                <span className="text-sm text-gray-500">{direction.servicesCount} servicios</span>
+                <span className="text-sm text-gray-500">{servicesData.filter(service => service.directionId === direction.id).length} servicios</span>
                 <ChevronDown
                   className={cn(
                     "h-5 w-5 text-primary transition-transform",

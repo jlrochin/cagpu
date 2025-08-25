@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useMemo } from "react"
 import { motion } from "framer-motion"
 import { Edit, Filter, Plus, Search, X } from "lucide-react"
 import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog"
@@ -38,6 +38,7 @@ export function ServiceManagement() {
   const [servicesData, setServicesData] = useState<any[]>([])
   const [directionsData, setDirectionsData] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
+  const [activeTab, setActiveTab] = useState<string>("all")
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
@@ -54,10 +55,10 @@ export function ServiceManagement() {
           fetch('/api/services'),
           fetch('/api/directions')
         ])
-        
+
         const services = await servicesRes.json()
         const directions = await directionsRes.json()
-        
+
         setServicesData(services)
         setDirectionsData(directions)
       } catch (error) {
@@ -66,21 +67,29 @@ export function ServiceManagement() {
         setLoading(false)
       }
     }
-    
+
     fetchData()
   }, [])
 
-  // 2. Cálculo de filteredServices
-  const filteredServices = servicesData.filter((service) => {
-    const matchesSearch =
-      searchQuery === "" ||
-      service.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      service.responsiblePerson.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      service.location.toLowerCase().includes(searchQuery.toLowerCase())
+  // 2. Cálculo de filteredServices - memoizado para evitar infinite loops
+  const filteredServices = useMemo(() => {
+    return servicesData.filter((service) => {
+      const matchesSearch =
+        searchQuery === "" ||
+        service.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        service.responsiblePerson.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        service.location.toLowerCase().includes(searchQuery.toLowerCase())
 
-    const matchesType = activeFilters.length === 0 || activeFilters.includes(service.serviceType)
-    return matchesSearch && matchesType
-  })
+      // Filtrar por tab activo (si no es "all")
+      const matchesTab = activeTab === "all" || service.directionId === activeTab
+
+      // Filtrar por direcciones adicionales (filtros del dropdown)
+      // Si hay filtros activos, se aplican además del tab
+      const matchesDirection = activeFilters.length === 0 || activeFilters.includes(service.directionId)
+
+      return matchesSearch && matchesTab && matchesDirection
+    })
+  }, [servicesData, searchQuery, activeTab, activeFilters])
 
   // 3. useEffect que depende de filteredServices
   useEffect(() => {
@@ -108,6 +117,7 @@ export function ServiceManagement() {
   const clearFilters = () => {
     setActiveFilters([])
     setSearchQuery("")
+    setActiveTab("all")
   }
 
   const serviceTypeOptions = [
@@ -136,16 +146,67 @@ export function ServiceManagement() {
     }
   }
 
+  const formatDirectionName = (name: string) => {
+    if (!name) return ""
+    // Asegurar que los nombres se vean consistentes
+    return name
+      .replace(/^DIRECCIÓN\s+DE\s+/, "")
+      .replace(/^DIRECCIÓN\s+/, "")
+      .replace(/\s+/g, " ")
+      .trim()
+  }
+
+  const getDirectionShortName = (name: string) => {
+    if (!name) return ""
+    // Devolver el nombre completo sin "DIRECCIÓN DE"
+    return formatDirectionName(name)
+  }
+
   function handleEditService(service: Service) {
     setModalService(service)
   }
 
   function handleNewService() {
-    setModalService({} as Service)
+    // Crear un objeto de servicio vacío pero con estructura válida
+    const newService = {
+      id: "",
+      name: "",
+      directionId: "",
+      responsiblePerson: "",
+      phoneExtension: "",
+      serviceType: "support",
+      location: "",
+      description: "",
+      isActive: true,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+      direction: null
+    } as any
+    setModalService(newService)
   }
 
   function handleCloseModal() {
     setModalService(null)
+    // Recargar datos después de cerrar el modal
+    refetchData()
+  }
+
+  // Función para recargar los datos
+  const refetchData = async () => {
+    try {
+      const [servicesRes, directionsRes] = await Promise.all([
+        fetch('/api/services'),
+        fetch('/api/directions')
+      ])
+
+      const services = await servicesRes.json()
+      const directions = await directionsRes.json()
+
+      setServicesData(services)
+      setDirectionsData(directions)
+    } catch (error) {
+      console.error('Error al recargar datos:', error)
+    }
   }
 
   if (loading) {
@@ -178,14 +239,16 @@ export function ServiceManagement() {
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
             <div>
               <CardTitle>Gestión de Servicios</CardTitle>
-              <CardDescription>Acceda y modifique la información de los servicios</CardDescription>
+              <CardDescription>
+                Acceda y modifique la información de los servicios. Use las pestañas para filtrar por dirección y el menú de filtros para refinar su búsqueda.
+              </CardDescription>
             </div>
             <div className="flex gap-2">
               {role !== 'user' && (
                 <ExportOptions data={filteredServices} filename="servicios-hospital" />
               )}
               {role !== 'user' && (
-                <Button 
+                <Button
                   className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700"
                   onClick={handleNewService}
                 >
@@ -229,26 +292,31 @@ export function ServiceManagement() {
                     )}
                   </Button>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="w-56">
-                  <DropdownMenuLabel>Filtrar por tipo</DropdownMenuLabel>
+                <DropdownMenuContent align="end" className="w-80">
+                  <DropdownMenuLabel>Filtros adicionales por dirección</DropdownMenuLabel>
                   <DropdownMenuSeparator />
                   <DropdownMenuGroup>
-                    {serviceTypeOptions.map((option) => (
+                    {directionsData.map((direction) => (
                       <DropdownMenuItem
-                        key={option.value}
+                        key={direction.id}
                         className="flex items-center gap-2"
                         onSelect={(e) => {
                           e.preventDefault()
-                          toggleFilter(option.value)
+                          toggleFilter(direction.id)
                         }}
                       >
                         <div
                           className={cn(
                             "h-3 w-3 rounded-full",
-                            activeFilters.includes(option.value) ? "bg-primary" : "bg-muted",
+                            activeFilters.includes(direction.id) ? "bg-primary" : "bg-muted",
                           )}
                         />
-                        <span>{option.label}</span>
+                        <span className="text-sm">{formatDirectionName(direction.name)}</span>
+                        {activeTab === direction.id && (
+                          <Badge variant="secondary" className="ml-auto text-xs">
+                            Activo
+                          </Badge>
+                        )}
                       </DropdownMenuItem>
                     ))}
                   </DropdownMenuGroup>
@@ -321,42 +389,46 @@ export function ServiceManagement() {
           </div>
 
           {activeFilters.length > 0 && (
-            <div className="flex flex-wrap gap-2 mb-4">
-              {activeFilters.map((filter) => (
-                <Badge key={filter} variant="outline" className="gap-1 pl-2">
-                  {getServiceTypeLabel(filter)}
-                  <Button variant="ghost" size="icon" className="h-4 w-4 p-0 ml-1" onClick={() => toggleFilter(filter)}>
-                    <X className="h-3 w-3" />
-                  </Button>
-                </Badge>
-              ))}
-              <Button variant="ghost" size="sm" className="h-6 text-xs" onClick={clearFilters}>
-                Limpiar todos
-              </Button>
+            <div className="mb-4">
+              <div className="flex items-center gap-2 mb-2">
+                <span className="text-sm text-muted-foreground">Filtros aplicados:</span>
+                <Button variant="ghost" size="sm" className="h-6 text-xs" onClick={clearFilters}>
+                  Limpiar todos
+                </Button>
+              </div>
+              <div className="flex flex-wrap gap-2">
+                {activeFilters.map((filter) => {
+                  const direction = directionsData.find(d => d.id === filter)
+                  return (
+                    <Badge key={filter} variant="outline" className="gap-1 pl-2 text-xs max-w-[300px]">
+                      <span className="truncate">{direction ? formatDirectionName(direction.name) : filter}</span>
+                      <Button variant="ghost" size="icon" className="h-4 w-4 p-0 ml-1 flex-shrink-0" onClick={() => toggleFilter(filter)}>
+                        <X className="h-3 w-3" />
+                      </Button>
+                    </Badge>
+                  )
+                })}
+              </div>
             </div>
           )}
 
-          <Tabs defaultValue="all">
-            <TabsList className="mb-4 flex flex-wrap">
-              <TabsTrigger value="all">Todos</TabsTrigger>
-              {directionsData.map((direction) => {
-                // Crear abreviaciones más apropiadas para las direcciones
-                const getDirectionLabel = (name: string) => {
-                  if (name.includes('Médica')) return 'Médica'
-                  if (name.includes('Enfermería')) return 'Enfermería'
-                  if (name.includes('Investigación')) return 'Investigación'
-                  if (name.includes('Desarrollo')) return 'Desarrollo'
-                  if (name.includes('Administración')) return 'Administración'
-                  return name.split(' ')[0] // fallback al primer palabra
-                }
-                
-                return (
-                  <TabsTrigger key={direction.id} value={direction.id} className="hidden md:inline-flex">
-                    {getDirectionLabel(direction.name)}
-                  </TabsTrigger>
-                )
-              })}
-            </TabsList>
+          <Tabs value={activeTab} onValueChange={setActiveTab}>
+            <div className="mb-4">
+              <TabsList className="flex flex-wrap justify-around w-full h-auto p-3 gap-1 bg-muted/50">
+                <TabsTrigger value="all" className="text-sm px-3 py-2 h-[4rem] flex items-center justify-center text-center min-w-[150px] max-w-[150px] flex-1 whitespace-normal">
+                  <span className="font-medium">Todos</span>
+                </TabsTrigger>
+                {directionsData.map((direction) => {
+                  return (
+                    <TabsTrigger key={direction.id} value={direction.id} className="text-xs px-3 py-2 h-[4rem] flex items-center justify-center text-center min-w-[150px] max-w-[150px] flex-1 whitespace-normal">
+                      <span className="leading-tight text-center font-medium break-words">
+                        {getDirectionShortName(direction.name)}
+                      </span>
+                    </TabsTrigger>
+                  )
+                })}
+              </TabsList>
+            </div>
 
             <TabsContent value="all" className="mt-0">
               {viewMode === "grid" ? (
@@ -372,11 +444,11 @@ export function ServiceManagement() {
               <TabsContent key={direction.id} value={direction.id} className="mt-0">
                 {viewMode === "grid" ? (
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                    {renderServiceCards(filteredServices.filter((service) => service.directionId === direction.id))}
+                    {renderServiceCards(filteredServices)}
                   </div>
                 ) : (
                   <div className="space-y-3">
-                    {renderServiceList(filteredServices.filter((service) => service.directionId === direction.id))}
+                    {renderServiceList(filteredServices)}
                   </div>
                 )}
               </TabsContent>
@@ -390,11 +462,17 @@ export function ServiceManagement() {
             </div>
             <h3 className="text-lg font-semibold">No se encontraron servicios</h3>
             <p className="text-muted-foreground mt-1">
-              Intente ajustar sus filtros o términos de búsqueda para encontrar lo que busca.
+              {activeTab !== "all" || activeFilters.length > 0 || searchQuery ? (
+                "Intente ajustar sus filtros o términos de búsqueda para encontrar lo que busca."
+              ) : (
+                "No hay servicios disponibles en este momento."
+              )}
             </p>
-            <Button variant="outline" className="mt-4" onClick={clearFilters}>
-              Limpiar filtros
-            </Button>
+            {(activeTab !== "all" || activeFilters.length > 0 || searchQuery) && (
+              <Button variant="outline" className="mt-4" onClick={clearFilters}>
+                Limpiar filtros
+              </Button>
+            )}
           </CardFooter>
         )}
       </Card>
@@ -423,7 +501,7 @@ export function ServiceManagement() {
             <div className="flex justify-between items-start">
               <div>
                 <CardTitle className="text-base">{service.name}</CardTitle>
-                <CardDescription>{service.direction?.name || directionsData.find((d) => d.id === service.directionId)?.name}</CardDescription>
+                <CardDescription>{formatDirectionName(service.direction?.name || directionsData.find((d) => d.id === service.directionId)?.name || "")}</CardDescription>
               </div>
               <Badge className={cn("ml-2", getServiceTypeBadgeColor(service.serviceType))}>
                 {getServiceTypeLabel(service.serviceType)}
@@ -478,7 +556,7 @@ export function ServiceManagement() {
               <div>
                 <h3 className="text-lg font-semibold">{service.name}</h3>
                 <p className="text-sm text-muted-foreground">
-                  {service.direction?.name || directionsData.find((d) => d.id === service.directionId)?.name}
+                  {formatDirectionName(service.direction?.name || directionsData.find((d) => d.id === service.directionId)?.name || "")}
                 </p>
               </div>
               <div className="flex items-center gap-2">

@@ -58,10 +58,10 @@ export async function GET(request: NextRequest) {
         const admin = await prisma.user.create({
           data: {
             username: 'admin',
-            email: 'admin@cagpu.com',
+            email: 'admin@sistema.local',
             passwordHash: adminHash,
             role: 'admin',
-            firstName: 'Admin',
+            firstName: 'Administrador',
             lastName: 'Sistema',
             department: 'TI',
             isActive: true,
@@ -78,12 +78,12 @@ export async function GET(request: NextRequest) {
         const user = await prisma.user.create({
           data: {
             username: 'user',
-            email: 'user@cagpu.com',
+            email: 'user@sistema.local',
             passwordHash: userHash,
             role: 'user',
             firstName: 'Usuario',
-            lastName: 'Demo',
-            department: 'Médica',
+            lastName: 'Sistema',
+            department: 'General',
             isActive: true,
           },
         });

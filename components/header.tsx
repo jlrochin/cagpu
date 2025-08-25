@@ -39,14 +39,13 @@ export function Header() {
       clearTimeout(timeout);
       events.forEach(event => window.removeEventListener(event, resetTimer));
     };
-    // eslint-disable-next-line
   }, []);
 
   // Función para cerrar sesión
   const handleLogout = async () => {
     try {
       await fetch("/api/auth/logout", { method: "POST" });
-    } catch (e) {}
+    } catch (e) { }
     localStorage.removeItem("user");
     localStorage.removeItem("role");
     window.dispatchEvent(new Event("userChanged"));
@@ -57,9 +56,9 @@ export function Header() {
     <header className="sticky top-0 z-10 w-full border-b bg-background">
       <div className="container flex h-16 items-center justify-between px-4">
         <div className="flex items-center gap-2 md:gap-4">
-          <img 
-            src="/logo_cagpu_sintexto.png" 
-            alt="CAGPU Logo" 
+          <img
+            src="/logo_cagpu_sintexto.png"
+            alt="CAGPU Logo"
             className="h-8 w-8 object-contain !cursor-pointer"
           />
           <span className="font-semibold text-foreground hidden md:inline-block text-sm md:text-base">CAGPU</span>
@@ -93,7 +92,7 @@ export function Header() {
                 </Link>
               </DropdownMenuItem>
               <DropdownMenuSeparator />
-              <DropdownMenuItem 
+              <DropdownMenuItem
                 onClick={handleLogout}
                 className="!cursor-pointer bg-red-600 text-white hover:bg-red-700 hover:text-white focus:bg-red-700 focus:text-white dark:bg-red-600 dark:hover:bg-red-700 dark:focus:bg-red-700"
               >

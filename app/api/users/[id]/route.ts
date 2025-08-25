@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/db'
 import bcrypt from 'bcryptjs'
 import { jwtVerify } from 'jose'
+import { generateUserChangeDetails } from '@/lib/change-details'
 
 const JWT_SECRET = process.env.JWT_SECRET || 'supersecreto'
 
@@ -34,9 +35,20 @@ export async function PUT(
       return NextResponse.json({ error: 'Usuario inactivo o no encontrado' }, { status: 403 })
     }
 
-    // Verificar si el usuario existe
+    // Verificar si el usuario existe y obtener datos actuales
     const existingUser = await prisma.user.findUnique({
       where: { id: userId },
+      select: {
+        id: true,
+        username: true,
+        email: true,
+        role: true,
+        firstName: true,
+        lastName: true,
+        department: true,
+        phone: true,
+        isActive: true,
+      },
     })
 
     if (!existingUser) {
@@ -101,13 +113,16 @@ export async function PUT(
       },
     })
 
+    // Generar detalles legibles de los cambios
+    const changeDetails = generateUserChangeDetails(existingUser, updateData)
+    
     // Registrar en historial
     await prisma.userChangeHistory.create({
       data: {
         targetUserId: userId,
         action: 'update',
         performedBy,
-        details: `Usuario actualizado: ${JSON.stringify(updateData)}`,
+        details: changeDetails,
       },
     })
 

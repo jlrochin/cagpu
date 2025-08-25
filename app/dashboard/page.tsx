@@ -54,7 +54,7 @@ function CambiosRecientes({ history }: { history: any[] }) {
 
   return (
     <div className="space-y-4">
-      <h2 className="text-2xl font-bold mb-4">Cambios Recientes de Usuarios</h2>
+      <h2 className="text-2xl font-bold mb-4">Cambios Recientes de Usuarios y Servicios</h2>
       {history.length === 0 ? (
         <div className="text-gray-500">No hay cambios recientes.</div>
       ) : (
@@ -67,9 +67,15 @@ function CambiosRecientes({ history }: { history: any[] }) {
                   {new Date(item.createdAt).toLocaleString('es-ES')}
                 </span>
               </div>
-              <div className="text-sm text-gray-700 dark:text-gray-300">
-                {item.details}
-              </div>
+              {item.details && (
+                <div className="text-sm text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-700 p-2 rounded mt-2">
+                  <strong>Cambios:</strong> {
+                    item.details.startsWith('Usuario actualizado: {')
+                      ? 'Datos del usuario actualizados (información personal, rol, etc.)'
+                      : item.details
+                  }
+                </div>
+              )}
               <div className="text-xs text-gray-500 mt-1 flex gap-2 items-center">
                 Usuario afectado:
                 <span className="inline-block bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200 px-2 py-0.5 rounded font-semibold text-xs">
@@ -112,51 +118,51 @@ function AuditoriaLog({ logs, page, total, onPageChange }: { logs: any[], page: 
         <div className="text-gray-500">No hay eventos de auditoría.</div>
       ) : (
         <>
-        <ul className="space-y-2">
-          {logs.map((item) => (
-            <li key={item.id} className="border rounded-lg p-4 bg-gray-50 dark:bg-gray-800">
-              <div className="flex justify-between items-center mb-1">
-                <span className={`inline-block px-2 py-0.5 rounded font-semibold text-xs mr-2 capitalize ${actionBadgeClass(item.action)}`}>{item.action}</span>
-                <span className="inline-block bg-gray-200 text-gray-800 dark:bg-gray-700 dark:text-gray-200 px-2 py-0.5 rounded font-semibold text-xs">
-                  {new Date(item.createdAt).toLocaleString('es-ES')}
-                </span>
-              </div>
-              <div className="text-sm text-gray-700 dark:text-gray-300">
-                {item.details}
-              </div>
-              <div className="text-xs text-gray-500 mt-1 flex gap-2 items-center">
-                {item.performedByUser?.username && (
-                  <>
-                    Usuario:
-                    <span className="inline-block bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200 px-2 py-0.5 rounded font-semibold text-xs">
-                      {item.performedByUser.username}
-                    </span>
-                  </>
-                )}
-                {item.targetUser?.username && (
-                  <>
-                    | Afectado:
-                    <span className="inline-block bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200 px-2 py-0.5 rounded font-semibold text-xs">
-                      {item.targetUser.username}
-                    </span>
-                  </>
-                )}
-                {item.ip && <span>| IP: {item.ip}</span>}
-              </div>
-            </li>
-          ))}
-        </ul>
-        <div className="flex justify-center mt-4 gap-2">
-          {Array.from({ length: totalPages }, (_, i) => (
-            <button
-              key={i+1}
-              onClick={() => onPageChange(i+1)}
-              className={`px-3 py-1 rounded ${page === i+1 ? 'bg-blue-600 text-white' : 'bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200'}`}
-            >
-              {i+1}
-            </button>
-          ))}
-        </div>
+          <ul className="space-y-2">
+            {logs.map((item) => (
+              <li key={item.id} className="border rounded-lg p-4 bg-gray-50 dark:bg-gray-800">
+                <div className="flex justify-between items-center mb-1">
+                  <span className={`inline-block px-2 py-0.5 rounded font-semibold text-xs mr-2 capitalize ${actionBadgeClass(item.action)}`}>{item.action}</span>
+                  <span className="inline-block bg-gray-200 text-gray-800 dark:bg-gray-700 dark:text-gray-200 px-2 py-0.5 rounded font-semibold text-xs">
+                    {new Date(item.createdAt).toLocaleString('es-ES')}
+                  </span>
+                </div>
+                <div className="text-sm text-gray-700 dark:text-gray-300">
+                  {item.details}
+                </div>
+                <div className="text-xs text-gray-500 mt-1 flex gap-2 items-center">
+                  {item.performedByUser?.username && (
+                    <>
+                      Usuario:
+                      <span className="inline-block bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200 px-2 py-0.5 rounded font-semibold text-xs">
+                        {item.performedByUser.username}
+                      </span>
+                    </>
+                  )}
+                  {item.targetUser?.username && (
+                    <>
+                      | Afectado:
+                      <span className="inline-block bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200 px-2 py-0.5 rounded font-semibold text-xs">
+                        {item.targetUser.username}
+                      </span>
+                    </>
+                  )}
+                  {item.ip && <span>| IP: {item.ip}</span>}
+                </div>
+              </li>
+            ))}
+          </ul>
+          <div className="flex justify-center mt-4 gap-2">
+            {Array.from({ length: totalPages }, (_, i) => (
+              <button
+                key={i + 1}
+                onClick={() => onPageChange(i + 1)}
+                className={`px-3 py-1 rounded ${page === i + 1 ? 'bg-blue-600 text-white' : 'bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200'}`}
+              >
+                {i + 1}
+              </button>
+            ))}
+          </div>
         </>
       )}
     </div>

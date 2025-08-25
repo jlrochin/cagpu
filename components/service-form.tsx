@@ -1,16 +1,17 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { motion } from "framer-motion"
 import { Save } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import type { Service } from '@/lib/types'
 import { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider } from '@/components/ui/tooltip'
 import { HelpCircle } from 'lucide-react'
-import { toast } from "@/components/ui/use-toast"
+import { toast } from "sonner"
 
 const instructivo = {
   area: "Indicar el nombre del Área o Servicio de acuerdo al Organigrama Funcional",
@@ -34,13 +35,14 @@ const instructivo = {
 
 export function ServiceForm({ service, onSaved }: { service?: Service, onSaved?: () => void }) {
   const [formData, setFormData] = useState({
+    id: service?.id || "",
     area: service?.name || "",
     responsible: service?.responsiblePerson || "",
     phoneExtension: service?.phoneExtension || "",
     location: service?.location || "",
-    direction: "",
+    direction: service?.directionId || "",
     division: "",
-    serviceType: service?.serviceType || "",
+    serviceType: service?.serviceType || "support",
     particularInfo: service?.description || "",
     documentation: "",
     consultorioNumber: "",
@@ -54,26 +56,90 @@ export function ServiceForm({ service, onSaved }: { service?: Service, onSaved?:
   })
 
   const [isSaving, setIsSaving] = useState(false)
+  const [directionsData, setDirectionsData] = useState<any[]>([])
+
+  // Cargar direcciones para el select
+  useEffect(() => {
+    fetch('/api/directions')
+      .then(res => res.json())
+      .then(data => setDirectionsData(data))
+      .catch(error => console.error('Error al cargar direcciones:', error))
+  }, [])
 
   const handleChange = (field: string, value: string) => {
     setFormData({ ...formData, [field]: value })
   }
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setIsSaving(true)
-    setTimeout(() => {
-      setIsSaving(false)
-      const isNewService = !service?.id
-      toast({
-        title: isNewService ? "Servicio creado" : "Cambios guardados",
-        description: isNewService 
-          ? "El nuevo servicio se creó correctamente." 
-          : "La información del servicio se actualizó correctamente."
+
+    try {
+      const isNewService = !service?.id || service.id === ""
+
+      // Generar ID automático para nuevos servicios si no existe
+      let serviceId = formData.id
+      if (isNewService && !serviceId) {
+        serviceId = formData.area.toLowerCase()
+          .replace(/[^a-z0-9\s]/g, '')
+          .replace(/\s+/g, '-')
+          .substring(0, 50)
+
+        // Agregar timestamp para evitar duplicados
+        serviceId = `${serviceId}-${Date.now()}`
+      }
+
+      const serviceData = {
+        id: serviceId,
+        name: formData.area,
+        directionId: formData.direction,
+        responsiblePerson: formData.responsible,
+        phoneExtension: formData.phoneExtension,
+        serviceType: formData.serviceType,
+        location: formData.location,
+        description: formData.particularInfo
+      }
+
+      // Validar campos requeridos
+      if (!serviceData.name || !serviceData.directionId) {
+        toast.error("El nombre del servicio y la dirección son obligatorios.")
+        setIsSaving(false)
+        return
+      }
+
+      const url = '/api/services'
+      const method = isNewService ? 'POST' : 'PUT'
+
+      const response = await fetch(url, {
+        method,
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(serviceData)
       })
+
+      const result = await response.json()
+
+      if (!response.ok) {
+        throw new Error(result.error || 'Error al guardar el servicio')
+      }
+
+      toast.success(isNewService
+        ? "El nuevo servicio se creó correctamente."
+        : "La información del servicio se actualizó correctamente.")
+
+      // Disparar evento para actualizar notificaciones
+      if (typeof window !== 'undefined') {
+        window.dispatchEvent(new CustomEvent('notificationsUpdate'))
+      }
+
       if (onSaved) onSaved()
-      // Aquí iría la lógica para guardar los datos
-    }, 1500)
+    } catch (error) {
+      console.error('Error al guardar servicio:', error)
+      toast.error(error instanceof Error ? error.message : "Error al guardar el servicio")
+    } finally {
+      setIsSaving(false)
+    }
   }
 
   return (
@@ -91,7 +157,18 @@ export function ServiceForm({ service, onSaved }: { service?: Service, onSaved?:
           <div className="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-4">
             <div className="flex flex-col gap-1">
               <div className="flex items-center gap-1 min-h-[24px]">
-                <Label className="whitespace-normal">ÁREA O SERVICIO</Label>
+                <Label className="whitespace-normal">ID DEL SERVICIO</Label>
+              </div>
+              <Input
+                value={formData.id}
+                onChange={e => handleChange("id", e.target.value)}
+                placeholder="Se generará automáticamente si se deja vacío"
+                disabled={!!service?.id} // Solo editable para nuevos servicios
+              />
+            </div>
+            <div className="flex flex-col gap-1">
+              <div className="flex items-center gap-1 min-h-[24px]">
+                <Label className="whitespace-normal">ÁREA O SERVICIO *</Label>
                 <Tooltip>
                   <TooltipTrigger asChild>
                     <span className="cursor-pointer text-muted-foreground"><HelpCircle className="w-4 h-4" /></span>
@@ -99,7 +176,7 @@ export function ServiceForm({ service, onSaved }: { service?: Service, onSaved?:
                   <TooltipContent side="bottom" align="center" sideOffset={12} className="max-w-4xl break-words text-xs">{instructivo.area}</TooltipContent>
                 </Tooltip>
               </div>
-              <Input value={formData.area} onChange={e => handleChange("area", e.target.value)} />
+              <Input value={formData.area} onChange={e => handleChange("area", e.target.value)} required />
             </div>
             <div className="flex flex-col gap-1">
               <div className="flex items-center gap-1 min-h-[24px]">
@@ -139,7 +216,7 @@ export function ServiceForm({ service, onSaved }: { service?: Service, onSaved?:
             </div>
             <div className="flex flex-col gap-1">
               <div className="flex items-center gap-1 min-h-[24px]">
-                <Label className="whitespace-normal">DIRECCIÓN A LA QUE PERTENECE</Label>
+                <Label className="whitespace-normal">DIRECCIÓN A LA QUE PERTENECE *</Label>
                 <Tooltip>
                   <TooltipTrigger asChild>
                     <span className="cursor-pointer text-muted-foreground"><HelpCircle className="w-4 h-4" /></span>
@@ -147,7 +224,18 @@ export function ServiceForm({ service, onSaved }: { service?: Service, onSaved?:
                   <TooltipContent side="bottom" align="center" sideOffset={12} className="max-w-4xl break-words text-xs">{instructivo.direction}</TooltipContent>
                 </Tooltip>
               </div>
-              <Input value={formData.direction} onChange={e => handleChange("direction", e.target.value)} />
+              <Select value={formData.direction} onValueChange={value => handleChange("direction", value)}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Seleccione una dirección" />
+                </SelectTrigger>
+                <SelectContent>
+                  {directionsData.map((direction) => (
+                    <SelectItem key={direction.id} value={direction.id}>
+                      {direction.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
             <div className="flex flex-col gap-1">
               <div className="flex items-center gap-1 min-h-[24px]">
@@ -171,7 +259,17 @@ export function ServiceForm({ service, onSaved }: { service?: Service, onSaved?:
                   <TooltipContent side="bottom" align="center" sideOffset={12} className="max-w-4xl break-words text-xs">{instructivo.serviceType}</TooltipContent>
                 </Tooltip>
               </div>
-              <Input value={formData.serviceType} onChange={e => handleChange("serviceType", e.target.value)} />
+              <Select value={formData.serviceType} onValueChange={value => handleChange("serviceType", value)}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Seleccione el tipo de servicio" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="clinical">Clínico</SelectItem>
+                  <SelectItem value="administrative">Administrativo</SelectItem>
+                  <SelectItem value="support">Apoyo</SelectItem>
+                  <SelectItem value="specialized">Especializado</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
             <div className="flex flex-col gap-1 md:col-span-2">
               <div className="flex items-center gap-1 min-h-[24px]">

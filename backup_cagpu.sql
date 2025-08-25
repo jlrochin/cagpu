@@ -157,11 +157,6 @@ ALTER TABLE ONLY public.users ALTER COLUMN id SET DEFAULT nextval('public.users_
 --
 
 COPY public.directions (id, name, description, services_count) FROM stdin;
-medical	Dirección Médica	Servicios médicos y atención al paciente	12
-nursing	Dirección de Enfermería	Servicios de enfermería y cuidados	8
-research	Dirección de Investigación y Enseñanza	Investigación médica y formación	5
-development	Dirección de Desarrollo y Vinculación Institucional	Relaciones institucionales y desarrollo	4
-administration	Dirección de Administración	Gestión administrativa y recursos	7
 \.
 
 
@@ -178,18 +173,6 @@ COPY public.notifications (id, title, message, user_id, service_id, is_read, cre
 --
 
 COPY public.services (id, direction_id, name, responsible_person, phone_extension, service_type, location, description, is_active, created_at, updated_at) FROM stdin;
-cardiology	medical	Cardiología	Dr. Carlos Rodríguez	1234	clinical	Edificio A, Piso 2	Servicio especializado en diagnóstico y tratamiento de enfermedades cardiovasculares.	t	2025-06-17 02:38:46.850625	2025-06-17 02:38:46.850625
-neurology	medical	Neurología	Dra. Ana Martínez	1235	clinical	Edificio A, Piso 3	Atención especializada en trastornos del sistema nervioso.	t	2025-06-17 02:38:46.850625	2025-06-17 02:38:46.850625
-pediatrics	medical	Pediatría	Dr. Miguel Sánchez	1236	clinical	Edificio B, Piso 1	Atención médica para niños y adolescentes.	t	2025-06-17 02:38:46.850625	2025-06-17 02:38:46.850625
-emergency-nursing	nursing	Enfermería de Urgencias	Lic. Laura Gómez	2234	support	Edificio C, Planta Baja	Servicios de enfermería en el área de urgencias.	t	2025-06-17 02:38:46.850625	2025-06-17 02:38:46.850625
-intensive-care-nursing	nursing	Enfermería de Cuidados Intensivos	Lic. Roberto Díaz	2235	specialized	Edificio A, Piso 4	Cuidados de enfermería especializados para pacientes críticos.	t	2025-06-17 02:38:46.850625	2025-06-17 02:38:46.850625
-clinical-research	research	Investigación Clínica	Dr. Javier López	3234	specialized	Edificio D, Piso 2	Desarrollo de estudios clínicos y protocolos de investigación.	t	2025-06-17 02:38:46.850625	2025-06-17 02:38:46.850625
-medical-education	research	Educación Médica Continua	Dra. Patricia Flores	3235	support	Edificio D, Piso 1	Programas de actualización y formación continua para profesionales de la salud.	t	2025-06-17 02:38:46.850625	2025-06-17 02:38:46.850625
-institutional-relations	development	Relaciones Institucionales	Lic. Fernando Torres	4234	administrative	Edificio E, Piso 3	Gestión de relaciones con otras instituciones y organismos.	t	2025-06-17 02:38:46.850625	2025-06-17 02:38:46.850625
-social-service	development	Servicio Social	Lic. Mariana Vega	4235	support	Edificio E, Piso 2	Coordinación de programas de servicio social y voluntariado.	t	2025-06-17 02:38:46.850625	2025-06-17 02:38:46.850625
-human-resources	administration	Recursos Humanos	Lic. Gabriela Mendoza	5234	administrative	Edificio F, Piso 1	Gestión del personal y procesos administrativos relacionados.	t	2025-06-17 02:38:46.850625	2025-06-17 02:38:46.850625
-finance	administration	Finanzas	C.P. Héctor Ramírez	5235	administrative	Edificio F, Piso 2	Administración de recursos financieros y contabilidad.	t	2025-06-17 02:38:46.850625	2025-06-17 02:38:46.850625
-maintenance	administration	Mantenimiento	Ing. Ricardo Ortiz	5236	support	Edificio F, Planta Baja	Mantenimiento de instalaciones y equipos.	t	2025-06-17 02:38:46.850625	2025-06-17 02:38:46.850625
 \.
 
 
@@ -198,8 +181,8 @@ maintenance	administration	Mantenimiento	Ing. Ricardo Ortiz	5236	support	Edifici
 --
 
 COPY public.users (id, username, email, password_hash, role, first_name, last_name, department, phone, is_active, created_at, updated_at) FROM stdin;
-1	admin	admin@cagpu.com	$2a$12$aUn6Tba0QlGhb9iIaLUsBuglBtQ6DhWEbFuytwrTLmTNjgrVqkc.2	admin	Admin	Sistema	TI		t	2025-06-17 02:38:46.85132	2025-06-17 13:00:13.846
-2	user	user@cagpu.com	$2a$12$Wkdm58Fc38mpDt3ERCVVx.pZRScaM17WW1I9UG.T93t/MHIooYdki	user	Usuario	Demo	Médica	\N	t	2025-06-17 02:38:46.85132	2025-06-24 20:19:01.08
+1	admin	admin@sistema.local	$2a$12$aUn6Tba0QlGhb9iIaLUsBuglBtQ6DhWEbFuytwrTLmTNjgrVqkc.2	admin	Administrador	Sistema	TI		t	2025-06-17 02:38:46.85132	2025-06-17 13:00:13.846
+2	user	user@sistema.local	$2a$12$Wkdm58Fc38mpDt3ERCVVx.pZRScaM17WW1I9UG.T93t/MHIooYdki	user	Usuario	Sistema	General	\N	t	2025-06-17 02:38:46.85132	2025-06-24 20:19:01.08
 \.
 
 
