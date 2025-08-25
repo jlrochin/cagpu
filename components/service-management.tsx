@@ -5,7 +5,6 @@ import { motion } from "framer-motion"
 import { Edit, Filter, Plus, Search, X } from "lucide-react"
 import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog"
 
-import { directionsData, servicesData } from "@/lib/data"
 import { cn } from "@/lib/utils"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
@@ -36,11 +35,39 @@ export function ServiceManagement() {
   const [role, setRole] = useState<string | null>(null)
   const [tipoExport, setTipoExport] = useState("servicios")
   const [dataExport, setDataExport] = useState<any[]>([])
+  const [servicesData, setServicesData] = useState<any[]>([])
+  const [directionsData, setDirectionsData] = useState<any[]>([])
+  const [loading, setLoading] = useState(true)
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
       setRole(localStorage.getItem('role'))
     }
+  }, [])
+
+  // Cargar datos de la base de datos
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        setLoading(true)
+        const [servicesRes, directionsRes] = await Promise.all([
+          fetch('/api/services'),
+          fetch('/api/directions')
+        ])
+        
+        const services = await servicesRes.json()
+        const directions = await directionsRes.json()
+        
+        setServicesData(services)
+        setDirectionsData(directions)
+      } catch (error) {
+        console.error('Error al cargar datos:', error)
+      } finally {
+        setLoading(false)
+      }
+    }
+    
+    fetchData()
   }, [])
 
   // 2. Cálculo de filteredServices
@@ -68,7 +95,7 @@ export function ServiceManagement() {
         .then(res => res.json())
         .then(data => setDataExport(data.history || []))
     }
-  }, [tipoExport])
+  }, [tipoExport, filteredServices])
 
   const handleServiceClick = (serviceId: string) => {
     setSelectedService(serviceId === selectedService ? null : serviceId)
@@ -119,6 +146,29 @@ export function ServiceManagement() {
 
   function handleCloseModal() {
     setModalService(null)
+  }
+
+  if (loading) {
+    return (
+      <div className="space-y-6">
+        <Card>
+          <CardHeader>
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+              <div>
+                <CardTitle>Gestión de Servicios</CardTitle>
+                <CardDescription>Cargando información de los servicios...</CardDescription>
+              </div>
+            </div>
+          </CardHeader>
+          <CardContent>
+            <div className="flex items-center justify-center py-12">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+              <span className="ml-2 text-muted-foreground">Cargando servicios de la base de datos...</span>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    )
   }
 
   return (
@@ -289,11 +339,23 @@ export function ServiceManagement() {
           <Tabs defaultValue="all">
             <TabsList className="mb-4 flex flex-wrap">
               <TabsTrigger value="all">Todos</TabsTrigger>
-              {directionsData.map((direction) => (
-                <TabsTrigger key={direction.id} value={direction.id} className="hidden md:inline-flex">
-                  {direction.name.split(" ")[1] || direction.name.split(" ")[0]}
-                </TabsTrigger>
-              ))}
+              {directionsData.map((direction) => {
+                // Crear abreviaciones más apropiadas para las direcciones
+                const getDirectionLabel = (name: string) => {
+                  if (name.includes('Médica')) return 'Médica'
+                  if (name.includes('Enfermería')) return 'Enfermería'
+                  if (name.includes('Investigación')) return 'Investigación'
+                  if (name.includes('Desarrollo')) return 'Desarrollo'
+                  if (name.includes('Administración')) return 'Administración'
+                  return name.split(' ')[0] // fallback al primer palabra
+                }
+                
+                return (
+                  <TabsTrigger key={direction.id} value={direction.id} className="hidden md:inline-flex">
+                    {getDirectionLabel(direction.name)}
+                  </TabsTrigger>
+                )
+              })}
             </TabsList>
 
             <TabsContent value="all" className="mt-0">
@@ -361,7 +423,7 @@ export function ServiceManagement() {
             <div className="flex justify-between items-start">
               <div>
                 <CardTitle className="text-base">{service.name}</CardTitle>
-                <CardDescription>{directionsData.find((d) => d.id === service.directionId)?.name}</CardDescription>
+                <CardDescription>{service.direction?.name || directionsData.find((d) => d.id === service.directionId)?.name}</CardDescription>
               </div>
               <Badge className={cn("ml-2", getServiceTypeBadgeColor(service.serviceType))}>
                 {getServiceTypeLabel(service.serviceType)}
@@ -416,7 +478,7 @@ export function ServiceManagement() {
               <div>
                 <h3 className="text-lg font-semibold">{service.name}</h3>
                 <p className="text-sm text-muted-foreground">
-                  {directionsData.find((d) => d.id === service.directionId)?.name}
+                  {service.direction?.name || directionsData.find((d) => d.id === service.directionId)?.name}
                 </p>
               </div>
               <div className="flex items-center gap-2">

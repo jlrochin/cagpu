@@ -56,7 +56,7 @@ GRANT ALL PRIVILEGES ON DATABASE cagpu_db TO cagpu_user;
 Crear archivo `.env.local`:
 
 ```env
-DATABASE_URL="postgresql://cagpu_user:cagpu_password@localhost:5432/cagpu_db"
+DATABASE_URL="postgresql://cagpu_user:cagpu_password@localhost:5434/cagpu_db"
 NEXTAUTH_SECRET="your-secret-key-here"
 NEXTAUTH_URL="http://localhost:3000"
 ```
@@ -123,7 +123,7 @@ cagpu/
 ### Conexión:
 
 - **Host**: localhost
-- **Puerto**: 5432
+- **Puerto**: 5434
 - **Base de datos**: cagpu_db
 - **Usuario**: cagpu_user
 - **Contraseña**: cagpu_password
@@ -168,7 +168,7 @@ pnpm prisma studio
 
 ```env
 NODE_ENV=production
-DATABASE_URL="postgresql://user:password@host:5432/database"
+DATABASE_URL="postgresql://user:password@host:5434/database"
 NEXTAUTH_SECRET="your-super-secret-key"
 NEXTAUTH_URL="https://your-domain.com"
 ```
