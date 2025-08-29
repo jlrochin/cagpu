@@ -1,11 +1,28 @@
+// ============================================================================
+// LAYOUT PRINCIPAL DE LA APLICACIÓN CAGPU
+// ============================================================================
+// Este archivo define la estructura base de la aplicación Next.js
+// Incluye:
+// - Configuración de metadatos y SEO
+// - Fuente tipográfica (Inter)
+// - Proveedor de tema (claro/oscuro)
+// - Estructura HTML base
+// ============================================================================
+
 import type React from "react"
 import type { Metadata } from "next"
 import { Inter } from "next/font/google"
 import "./globals.css"
 import { ThemeProvider } from "@/components/theme-provider"
 
+// ============================================================================
+// CONFIGURACIÓN DE FUENTE
+// ============================================================================
 const inter = Inter({ subsets: ["latin"] })
 
+// ============================================================================
+// METADATOS DE LA APLICACIÓN
+// ============================================================================
 export const metadata: Metadata = {
   title: "CAGPU - Catálogo de Atención",
   description: "Sistema de gestión CAGPU - Catálogo de Atención",
@@ -25,6 +42,9 @@ export const metadata: Metadata = {
   },
 }
 
+// ============================================================================
+// COMPONENTE PRINCIPAL DEL LAYOUT
+// ============================================================================
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -33,6 +53,7 @@ export default function RootLayout({
   return (
     <html lang="es" suppressHydrationWarning>
       <body className={inter.className}>
+        {/* Proveedor de tema para funcionalidad claro/oscuro */}
         <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
           {children}
         </ThemeProvider>

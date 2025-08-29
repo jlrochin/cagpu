@@ -1,6 +1,14 @@
-# Sistema CAGPU
+# Sistema CAGPU - Catálogo de Atención Generalizada
 
-Sistema de gestión de usuarios, servicios y direcciones construido con Next.js 14, React, TypeScript y Prisma.
+// ============================================================================
+// DESCRIPCIÓN DEL PROYECTO
+// ============================================================================
+// Sistema completo de gestión para el Catálogo de Atención Generalizada
+// a la Población Usuaria (CAGPU). Incluye gestión de usuarios, servicios,
+// direcciones y documentación completa del sistema.
+// ============================================================================
+
+Sistema de gestión de usuarios, servicios y direcciones construido con **Next.js 14**, **React**, **TypeScript** y **Prisma**.
 
 ## 🚀 Inicio Rápido
 
@@ -18,32 +26,39 @@ pnpm install
 cp .env.example .env.local
 # Editar .env.local con tus configuraciones
 
-# Ejecutar migraciones
+# Ejecutar migraciones de base de datos
 npx prisma migrate dev
 
-# Iniciar desarrollo
+# Iniciar servidor de desarrollo
 pnpm dev
 ```
 
 ### Comandos Útiles
 
 ```bash
-# Desarrollo
+# ============================================================================
+# DESARROLLO Y PRODUCCIÓN
+# ============================================================================
 pnpm dev                    # Servidor de desarrollo
 pnpm build                  # Construir para producción
 pnpm start                  # Servidor de producción
 
-# Base de datos
-npx prisma studio          # Interfaz visual de BD
+# ============================================================================
+# BASE DE DATOS
+# ============================================================================
+npx prisma studio          # Interfaz visual de base de datos
 npx prisma migrate dev     # Ejecutar migraciones
 npx prisma generate        # Generar cliente Prisma
 
-# Testing
+# ============================================================================
+# TESTING Y CALIDAD DE CÓDIGO
+# ============================================================================
 pnpm test                  # Ejecutar tests
 pnpm test:watch           # Tests en modo watch
+pnpm lint                  # Verificación de código
 ```
 
-## 📚 Documentación
+## 📚 Documentación del Sistema
 
 **La documentación completa del sistema está disponible en la aplicación web:**
 
@@ -52,76 +67,105 @@ pnpm test:watch           # Tests en modo watch
 - **Navegación**: Sidebar lateral con todas las secciones
 - **Estado**: Completamente funcional y accesible
 
-### Secciones de Documentación
+### Secciones de Documentación Disponibles
 
-1. **Arquitectura del Sistema** - Estructura, tecnologías y patrones
-2. **Base de Datos** - Esquema, modelos y optimización
-3. **Autenticación y Autorización** - Seguridad y permisos
+1. **Arquitectura del Sistema** - Estructura, tecnologías y patrones de diseño
+2. **Base de Datos** - Esquema, modelos y optimización de consultas
+3. **Autenticación y Autorización** - Seguridad, permisos y roles
 4. **API y Endpoints** - Endpoints disponibles y validaciones
-5. **Componentes de la Interfaz** - Sistema de diseño y componentes
-6. **Páginas y Rutas** - Estructura de navegación
-7. **Estado y Gestión de Datos** - Hooks y contexto
-8. **Utilidades y Helpers** - Funciones auxiliares
-9. **Despliegue y Configuración** - Docker y CI/CD
-10. **Mantenimiento y Operaciones** - Scripts y mantenimiento
+5. **Componentes de la Interfaz** - Sistema de diseño y componentes reutilizables
+6. **Páginas y Rutas** - Estructura de navegación y enrutamiento
+7. **Estado y Gestión de Datos** - Hooks personalizados y contexto
+8. **Utilidades y Helpers** - Funciones auxiliares y helpers
+9. **Despliegue y Configuración** - Docker, CI/CD y configuración de servidores
+10. **Mantenimiento y Operaciones** - Scripts de mantenimiento y operaciones
 
-## 🏗️ Arquitectura
+## 🏗️ Arquitectura del Sistema
+
+// ============================================================================
+// STACK TECNOLÓGICO
+// ============================================================================
+// El sistema está construido con tecnologías modernas y robustas
+// que garantizan escalabilidad, mantenibilidad y rendimiento
+// ============================================================================
 
 - **Frontend**: Next.js 14, React 18, TypeScript, Tailwind CSS
 - **Backend**: Next.js API Routes, Prisma ORM
 - **Base de Datos**: PostgreSQL
-- **Autenticación**: JWT, bcrypt
-- **Deployment**: Docker, Nginx, Systemd
+- **Autenticación**: JWT, bcrypt para hash de contraseñas
+- **Deployment**: Docker, Nginx, Systemd para servicios
 
 ## 📁 Estructura del Proyecto
 
 ```
 cagpu/
-├── app/                    # App Router de Next.js
-├── components/             # Componentes React
+├── app/                    # App Router de Next.js 14
+│   ├── api/               # Endpoints de la API
+│   ├── components/         # Componentes de la aplicación
+│   ├── documentacion/      # Sistema de documentación
+│   └── ...                 # Otras rutas de la aplicación
+├── components/             # Componentes React reutilizables
+│   ├── ui/                # Componentes de interfaz base
+│   └── ...                # Componentes específicos
 ├── lib/                    # Utilidades y configuración
-├── prisma/                 # Esquema y migraciones de BD
-├── scripts/                # Scripts de mantenimiento
-├── documentación/          # Documentación completa
+├── prisma/                 # Esquema y migraciones de base de datos
+├── scripts/                # Scripts de mantenimiento y utilidades
+├── hooks/                  # Hooks personalizados de React
+├── documentación/          # Documentación completa del sistema
 └── README.md               # Este archivo
 ```
 
-## 🔧 Características
+## 🔧 Características Principales
 
-- ✅ Autenticación y autorización robusta
-- ✅ Gestión completa de usuarios y roles
-- ✅ Sistema de notificaciones
-- ✅ Auditoría y logging
-- ✅ Interfaz responsive y accesible
-- ✅ API RESTful documentada
-- ✅ Base de datos optimizada
-- ✅ Scripts de mantenimiento automático
+// ============================================================================
+// FUNCIONALIDADES DEL SISTEMA
+// ============================================================================
+// El sistema incluye todas las funcionalidades necesarias para
+// la gestión completa de un catálogo de servicios
+// ============================================================================
 
-## 📖 Documentación Detallada
+- ✅ **Autenticación y autorización robusta** - Sistema de roles y permisos
+- ✅ **Gestión completa de usuarios y roles** - CRUD de usuarios y administración
+- ✅ **Sistema de notificaciones** - Notificaciones en tiempo real
+- ✅ **Auditoría y logging** - Registro completo de cambios y acciones
+- ✅ **Interfaz responsive y accesible** - Diseño adaptativo y accesible
+- ✅ **API RESTful documentada** - Endpoints bien documentados y validados
+- ✅ **Base de datos optimizada** - Esquema optimizado con Prisma
+- ✅ **Scripts de mantenimiento automático** - Automatización de tareas
+
+## 📖 Acceso a la Documentación Detallada
 
 Para acceder a la documentación completa del sistema:
 
-1. Inicia el servidor de desarrollo: `pnpm dev`
-2. Abre tu navegador en: `http://localhost:3000`
-3. Haz clic en el ícono de libro 📚 en el header
-4. Navega por las diferentes secciones usando el sidebar
+1. **Inicia el servidor de desarrollo**: `pnpm dev`
+2. **Abre tu navegador en**: `http://localhost:3000`
+3. **Haz clic en el ícono de libro** 📚 en el header principal
+4. **Navega por las diferentes secciones** usando el sidebar lateral
 5. **URL directa**: `http://localhost:3000/documentacion`
 
-## 🤝 Contribución
+## 🤝 Contribución al Proyecto
 
-1. Crear branch desde `main`
-2. Implementar cambios
-3. Ejecutar tests y linting
-4. Crear Pull Request
-5. Revisión de código
-6. Merge a `main`
+// ============================================================================
+// PROCESO DE CONTRIBUCIÓN
+// ============================================================================
+// Para mantener la calidad del código y facilitar la colaboración,
+// seguimos un proceso estandarizado de contribución
+// ============================================================================
+
+1. **Crear branch desde `main`** - Usar nombres descriptivos
+2. **Implementar cambios** - Seguir estándares de código
+3. **Ejecutar tests y linting** - Verificar calidad del código
+4. **Crear Pull Request** - Con descripción detallada
+5. **Revisión de código** - Revisión por pares obligatoria
+6. **Merge a `main`** - Solo después de aprobación
 
 ## 📄 Licencia
 
-Este proyecto está bajo la licencia MIT.
+Este proyecto está bajo la licencia **MIT**.
 
 ---
 
 **Última actualización**: Diciembre 2024  
 **Versión del sistema**: 1.0.0  
-**Mantenido por**: Equipo de Desarrollo CAGPU
+**Mantenido por**: Equipo de Desarrollo CAGPU  
+**Estado del proyecto**: ✅ Activo y en desarrollo

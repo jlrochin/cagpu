@@ -1,127 +1,186 @@
 "use client";
 
+// ============================================================================
+// COMPONENTE: FONDO ANIMADO
+// ============================================================================
+// Este componente crea un fondo animado interactivo usando Canvas API
+// Incluye:
+// - Partículas flotantes con movimiento oscilatorio
+// - Gradiente radial que sigue al cursor
+// - Efectos de sombra y transparencia
+// - Redimensionamiento automático del canvas
+// ============================================================================
+
 import { useEffect, useRef } from "react";
 
+// ============================================================================
+// INTERFACES Y TIPOS
+// ============================================================================
+interface Particle {
+  baseX: number;      // Posición base X de la partícula
+  baseY: number;      // Posición base Y de la partícula
+  x: number;          // Posición actual X
+  y: number;          // Posición actual Y
+  size: number;       // Tamaño de la partícula
+  color: string;      // Color de la partícula
+  angle: number;      // Ángulo para el movimiento oscilatorio
+  speed: number;      // Velocidad de movimiento
+}
+
+interface MousePosition {
+  x: number;
+  y: number;
+}
+
+// ============================================================================
+// COMPONENTE PRINCIPAL: FONDO ANIMADO
+// ============================================================================
 export function AnimatedBackground() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
-    const ctx = canvas.getContext("2d");
-    if (!ctx) return;
 
+    const ctx = canvas.getContext("2d");
+    if (!canvas) return;
+
+    // ============================================================================
+    // FUNCIÓN: REDIMENSIONAR CANVAS
+    // ============================================================================
+    // Ajusta el tamaño del canvas al tamaño de la ventana
     const resizeCanvas = () => {
       canvas.width = window.innerWidth;
       canvas.height = window.innerHeight;
     };
+
     resizeCanvas();
     window.addEventListener("resize", resizeCanvas);
 
-    // Partículas
-    const particles: Array<{
-      baseX: number;
-      baseY: number;
-      x: number;
-      y: number;
-      size: number;
-      color: string;
-      angle: number;
-      speed: number;
-    }> = [];
+    // ============================================================================
+    // CONFIGURACIÓN: PARTÍCULAS Y COLORES
+    // ============================================================================
+    const particles: Particle[] = [];
 
-    // Colores
+    // Paleta de colores para las partículas
     const colors = [
-      "rgba(59,130,246,0.7)", // azul
-      "rgba(99,102,241,0.7)", // índigo
-      "rgba(139,92,246,0.7)", // púrpura
-      "rgba(16,185,129,0.7)", // verde
-      "rgba(236,72,153,0.7)", // rosa
+      "rgba(59,130,246,0.7)",   // Azul
+      "rgba(99,102,241,0.7)",   // Índigo
+      "rgba(139,92,246,0.7)",   // Púrpura
+      "rgba(16,185,129,0.7)",   // Verde
+      "rgba(236,72,153,0.7)",   // Rosa
     ];
 
-    // Crear partículas con distribución uniforme según el tamaño de pantalla
+    // ============================================================================
+    // CREACIÓN: DISTRIBUCIÓN UNIFORME DE PARTÍCULAS
+    // ============================================================================
+    // Calcula el número de partículas basado en el área de la pantalla
     const area = canvas.width * canvas.height;
-    const density = 0.00003; // valor reducido para menos partículas
+    const density = 0.00003; // Densidad reducida para mejor rendimiento
     const numParticles = Math.floor(area * density);
     const gridSize = Math.ceil(Math.sqrt(numParticles));
     const cellWidth = canvas.width / gridSize;
     const cellHeight = canvas.height / gridSize;
 
+    // Crea partículas en una cuadrícula uniforme con desplazamiento aleatorio
     for (let gx = 0; gx < gridSize; gx++) {
       for (let gy = 0; gy < gridSize; gy++) {
-        // Posición base en la celda, con un pequeño desplazamiento aleatorio
-        const baseX =
-          gx * cellWidth +
+        // Posición base en la celda con desplazamiento aleatorio
+        const baseX = gx * cellWidth +
           cellWidth / 2 +
           (Math.random() - 0.5) * cellWidth * 0.5;
-        const baseY =
-          gy * cellHeight +
+        const baseY = gy * cellHeight +
           cellHeight / 2 +
           (Math.random() - 0.5) * cellHeight * 0.5;
+
         particles.push({
           baseX,
           baseY,
           x: baseX,
           y: baseY,
-          size: Math.random() * 14 + 6,
+          size: Math.random() * 14 + 6,        // Tamaño entre 6-20px
           color: colors[Math.floor(Math.random() * colors.length)],
-          angle: Math.random() * Math.PI * 2,
-          speed: Math.random() * 1.2 + 0.3,
+          angle: Math.random() * Math.PI * 2,  // Ángulo aleatorio inicial
+          speed: Math.random() * 1.2 + 0.3,   // Velocidad entre 0.3-1.5
         });
       }
     }
 
-    // Manejo de eventos
-    let mouse = { x: canvas.width / 2, y: canvas.height / 2 };
+    // ============================================================================
+    // CONFIGURACIÓN: POSICIÓN DEL CURSOR
+    // ============================================================================
+    let mouse: MousePosition = {
+      x: canvas.width / 2,
+      y: canvas.height / 2
+    };
 
-    // Animación
+    // ============================================================================
+    // FUNCIÓN: ANIMACIÓN PRINCIPAL
+    // ============================================================================
     const animate = () => {
       // Limpiar canvas
       ctx.clearRect(0, 0, canvas.width, canvas.height);
-      // Fondo degradado radial
+
+      // ============================================================================
+      // FONDO: GRADIENTE RADIAL
+      // ============================================================================
+      // Crea un gradiente radial que sigue al cursor
       const gradient = ctx.createRadialGradient(
-        mouse.x,
-        mouse.y,
-        100,
-        canvas.width / 2,
-        canvas.height / 2,
-        Math.max(canvas.width, canvas.height) / 1.2
+        mouse.x, mouse.y, 100,                    // Centro del gradiente (cursor)
+        canvas.width / 2, canvas.height / 2,      // Centro de la pantalla
+        Math.max(canvas.width, canvas.height) / 1.2 // Radio del gradiente
       );
-      gradient.addColorStop(0, "rgba(59,130,246,0.15)");
-      gradient.addColorStop(0.5, "rgba(139,92,246,0.10)");
-      gradient.addColorStop(1, "rgba(255,255,255,0.05)");
+
+      gradient.addColorStop(0, "rgba(59,130,246,0.15)");   // Azul en el centro
+      gradient.addColorStop(0.5, "rgba(139,92,246,0.10)"); // Púrpura en medio
+      gradient.addColorStop(1, "rgba(255,255,255,0.05)");  // Blanco transparente
+
       ctx.fillStyle = gradient;
       ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-      // Dibujar partículas
-      particles.forEach((p) => {
-        // Movimiento oscilatorio
-        p.angle += 0.005 * p.speed; // velocidad suave
-        const osc = Math.sin(p.angle) * 18; // amplitud mayor
-        const osc2 = Math.cos(p.angle) * 18;
+      // ============================================================================
+      // DIBUJO: PARTÍCULAS ANIMADAS
+      // ============================================================================
+      particles.forEach((particle) => {
+        // Movimiento oscilatorio suave
+        particle.angle += 0.005 * particle.speed;
+        const oscillationX = Math.sin(particle.angle) * 18;  // Amplitud X
+        const oscillationY = Math.cos(particle.angle) * 18;  // Amplitud Y
 
-        // Parallax eliminado, solo movimiento oscilatorio
-        p.x = p.baseX + osc;
-        p.y = p.baseY + osc2;
+        // Actualizar posición con movimiento oscilatorio
+        particle.x = particle.baseX + oscillationX;
+        particle.y = particle.baseY + oscillationY;
 
+        // Dibujar partícula
         ctx.beginPath();
-        ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
-        ctx.fillStyle = p.color;
-        ctx.shadowColor = p.color;
+        ctx.arc(particle.x, particle.y, particle.size, 0, Math.PI * 2);
+        ctx.fillStyle = particle.color;
+
+        // Efecto de sombra
+        ctx.shadowColor = particle.color;
         ctx.shadowBlur = 14;
         ctx.fill();
         ctx.shadowBlur = 0;
       });
 
+      // Continuar animación
       requestAnimationFrame(animate);
     };
+
+    // Iniciar animación
     animate();
 
+    // ============================================================================
+    // LIMPIEZA: REMOVER EVENT LISTENERS
+    // ============================================================================
     return () => {
       window.removeEventListener("resize", resizeCanvas);
     };
   }, []);
 
+  // ============================================================================
+  // RENDER: CANVAS ANIMADO
+  // ============================================================================
   return (
     <canvas
       ref={canvasRef}
