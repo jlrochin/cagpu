@@ -6,8 +6,11 @@ const JWT_SECRET = process.env.JWT_SECRET || 'supersecreto';
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
-  // Permitir el acceso directo a /login y a las rutas de la API
-  if (pathname.startsWith('/login') || pathname.startsWith('/api')) {
+  // Permitir el acceso directo a /login, documentación y solo a las APIs de autenticación
+  if (pathname.startsWith('/login') || 
+      pathname.startsWith('/documentacion') ||
+      pathname.startsWith('/api/auth') || 
+      pathname.startsWith('/api/ping')) {
     return NextResponse.next();
   }
 

@@ -24,8 +24,8 @@ export function validateServiceData(data: any): ValidationResult {
     errors.push('La extensión telefónica debe ser una cadena de texto');
   }
 
-  if (data.serviceType && !['clinical', 'administrative', 'support', 'specialized'].includes(data.serviceType)) {
-    errors.push('El tipo de servicio debe ser: clinical, administrative, support o specialized');
+  if (data.serviceType && !['clinical', 'administrative', 'support', 'specialized', 'Unidad', 'División', 'Servicio', 'Departamento', 'Subdirección', 'Coordinación', 'Área', 'Laboratorio'].includes(data.serviceType)) {
+    errors.push('El tipo de servicio debe ser uno de los valores permitidos: clinical, administrative, support, specialized, Unidad, División, Servicio, Departamento, Subdirección, Coordinación, Área, o Laboratorio');
   }
 
   if (data.location && typeof data.location !== 'string') {

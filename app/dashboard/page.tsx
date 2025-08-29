@@ -9,15 +9,8 @@ import { Toaster } from "@/components/ui/toaster"
 import React from "react"
 import { Button } from "@/components/ui/button"
 import Link from "next/link"
-import AdminUsuariosPage from "../admin/usuarios/page"
-import { prisma } from '@/lib/db'
-
-function getRole() {
-  if (typeof window !== 'undefined') {
-    return localStorage.getItem('role') || 'user'
-  }
-  return 'user'
-}
+import AdminUsuariosPage from "@/app/admin/usuarios/page"
+import { useAuth } from "@/hooks/use-auth"
 
 function AccessDenied({ onGoToServices }: { onGoToServices: () => void }) {
   return (
@@ -170,32 +163,71 @@ function AuditoriaLog({ logs, page, total, onPageChange }: { logs: any[], page: 
 }
 
 export default function Dashboard() {
-  const [role, setRole] = React.useState('user')
+  const { user, loading: authLoading, isAdmin } = useAuth()
   const [tab, setTab] = React.useState('services')
   const [history, setHistory] = React.useState<any[]>([])
   const [audit, setAudit] = React.useState<any[]>([])
   const [auditTotal, setAuditTotal] = React.useState(0)
   const [auditPage, setAuditPage] = React.useState(1)
+
   React.useEffect(() => {
-    setRole(getRole())
-    // Cargar historial de cambios recientes
-    fetch('/api/user-change-history')
-      .then(res => res.json())
-      .then(data => setHistory(data.history || []));
-  }, [])
+    if (!authLoading && user) {
+      // Cargar historial de cambios recientes solo para admins
+      if (isAdmin) {
+        fetch('/api/user-change-history', { credentials: 'include' })
+          .then(res => res.json())
+          .then(data => setHistory(data.history || []));
+      }
+    }
+  }, [authLoading, user, isAdmin])
+
   React.useEffect(() => {
-    fetch(`/api/audit-log?page=${auditPage}&limit=10`)
-      .then(res => res.json())
-      .then(data => {
-        setAudit(data.logs || [])
-        setAuditTotal(data.total || 0)
-      });
-  }, [auditPage])
+    if (isAdmin) {
+      fetch(`/api/audit-log?page=${auditPage}&limit=10`, { credentials: 'include' })
+        .then(res => res.json())
+        .then(data => {
+          setAudit(data.logs || [])
+          setAuditTotal(data.total || 0)
+        });
+    }
+  }, [auditPage, isAdmin])
+
   React.useEffect(() => {
-    if (role === 'user') {
+    if (!isAdmin) {
       setTab('services')
     }
-  }, [role])
+  }, [isAdmin])
+  // Mostrar loading mientras se verifica la autenticación
+  if (authLoading) {
+    return (
+      <div className="min-h-screen bg-background flex flex-col">
+        <Header />
+        <main className="flex-1 container mx-auto p-4 md:p-6">
+          <div className="flex items-center justify-center h-64">
+            <div className="text-lg">Verificando autenticación...</div>
+          </div>
+        </main>
+      </div>
+    )
+  }
+
+  // Redirigir al login si no hay usuario autenticado
+  if (!user) {
+    return (
+      <div className="min-h-screen bg-background flex flex-col">
+        <Header />
+        <main className="flex-1 container mx-auto p-4 md:p-6">
+          <div className="flex flex-col items-center justify-center h-64">
+            <div className="text-lg mb-4">Debes iniciar sesión para acceder</div>
+            <Button onClick={() => window.location.href = '/login'}>
+              Ir al Login
+            </Button>
+          </div>
+        </main>
+      </div>
+    )
+  }
+
   return (
     <div className="min-h-screen bg-background flex flex-col">
       <Header />
@@ -203,7 +235,7 @@ export default function Dashboard() {
         <Tabs value={tab} onValueChange={setTab} className="space-y-6">
           <div className="flex justify-between items-center">
             <TabsList className="bg-muted/80 p-1">
-              {role !== 'user' && (
+              {isAdmin && (
                 <TabsTrigger value="dashboard">Dashboard</TabsTrigger>
               )}
               <TabsTrigger
@@ -212,13 +244,13 @@ export default function Dashboard() {
               >
                 Servicios
               </TabsTrigger>
-              {role !== 'user' && <TabsTrigger value="analytics">Analíticas</TabsTrigger>}
-              {role !== 'user' && <TabsTrigger value="admin">Administrador</TabsTrigger>}
-              {role !== 'user' && <TabsTrigger value="history">Cambios Recientes</TabsTrigger>}
-              {role !== 'user' && <TabsTrigger value="audit">Auditoría</TabsTrigger>}
+              {isAdmin && <TabsTrigger value="analytics">Analíticas</TabsTrigger>}
+              {isAdmin && <TabsTrigger value="admin">Administrador</TabsTrigger>}
+              {isAdmin && <TabsTrigger value="history">Cambios Recientes</TabsTrigger>}
+              {isAdmin && <TabsTrigger value="audit">Auditoría</TabsTrigger>}
             </TabsList>
           </div>
-          {role !== 'user' && (
+          {isAdmin && (
             <TabsContent value="dashboard">
               <DashboardOverview />
             </TabsContent>
@@ -226,22 +258,22 @@ export default function Dashboard() {
           <TabsContent value="services">
             <ServiceManagement />
           </TabsContent>
-          {role !== 'user' && (
+          {isAdmin && (
             <TabsContent value="analytics">
               <AnalyticsDashboard />
             </TabsContent>
           )}
-          {role !== 'user' && (
+          {isAdmin && (
             <TabsContent value="admin">
               <AdminUsuariosPage />
             </TabsContent>
           )}
-          {role !== 'user' && (
+          {isAdmin && (
             <TabsContent value="history">
               <CambiosRecientes history={history} />
             </TabsContent>
           )}
-          {role !== 'user' && (
+          {isAdmin && (
             <TabsContent value="audit">
               <AuditoriaLog logs={audit} page={auditPage} total={auditTotal} onPageChange={setAuditPage} />
             </TabsContent>

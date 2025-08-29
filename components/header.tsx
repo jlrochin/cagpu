@@ -1,6 +1,6 @@
 "use client"
 
-import { Menu, Settings, User } from "lucide-react"
+import { Menu, Settings, User, BookOpen } from "lucide-react"
 import Link from "next/link"
 import { usePathname, useRouter } from "next/navigation"
 import { useEffect, useState } from "react"
@@ -67,6 +67,13 @@ export function Header() {
           </span>
         </div>
         <div className="flex items-center gap-2">
+          <Link
+            href="/documentacion"
+            className="p-2 text-muted-foreground hover:text-foreground transition-colors"
+            title="Documentación"
+          >
+            <BookOpen className="h-5 w-5" />
+          </Link>
           <ThemeToggle />
           <NotificationsPopover />
           <DropdownMenu>

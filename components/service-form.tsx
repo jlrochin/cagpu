@@ -42,7 +42,7 @@ export function ServiceForm({ service, onSaved }: { service?: Service, onSaved?:
     location: service?.location || "",
     direction: service?.directionId || "",
     division: "",
-    serviceType: service?.serviceType || "support",
+    serviceType: service?.serviceType || "Servicio",
     particularInfo: service?.description || "",
     documentation: "",
     consultorioNumber: "",
@@ -97,7 +97,8 @@ export function ServiceForm({ service, onSaved }: { service?: Service, onSaved?:
         phoneExtension: formData.phoneExtension,
         serviceType: formData.serviceType,
         location: formData.location,
-        description: formData.particularInfo
+        description: formData.particularInfo,
+        isActive: true // Agregar campo isActive que espera la validación
       }
 
       // Validar campos requeridos
@@ -106,6 +107,22 @@ export function ServiceForm({ service, onSaved }: { service?: Service, onSaved?:
         setIsSaving(false)
         return
       }
+
+      // Validación adicional
+      if (serviceData.name.trim().length === 0) {
+        toast.error("El nombre del servicio no puede estar vacío.")
+        setIsSaving(false)
+        return
+      }
+
+      if (serviceData.directionId.trim().length === 0) {
+        toast.error("Debe seleccionar una dirección.")
+        setIsSaving(false)
+        return
+      }
+
+      // Debug: mostrar datos que se envían
+      console.log('Datos del servicio a enviar:', serviceData)
 
       const url = '/api/services'
       const method = isNewService ? 'POST' : 'PUT'
@@ -121,6 +138,10 @@ export function ServiceForm({ service, onSaved }: { service?: Service, onSaved?:
       const result = await response.json()
 
       if (!response.ok) {
+        if (result.details && Array.isArray(result.details)) {
+          const errorMessage = result.details.join(', ')
+          throw new Error(`Error de validación: ${errorMessage}`)
+        }
         throw new Error(result.error || 'Error al guardar el servicio')
       }
 
@@ -153,9 +174,9 @@ export function ServiceForm({ service, onSaved }: { service?: Service, onSaved?:
       >
         {/* Sección 1 */}
         <div className="border rounded-lg p-6 bg-card">
-          <h2 className="text-lg font-semibold mb-4 text-center border-b pb-2">INFORMACIÓN GENERAL DEL ÁREA O SERVICIO</h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-4">
-            <div className="flex flex-col gap-1">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-4 pt-2">
+            {/* Campo ID del servicio oculto - se genera automáticamente */}
+            {/* <div className="flex flex-col gap-1">
               <div className="flex items-center gap-1 min-h-[24px]">
                 <Label className="whitespace-normal">ID DEL SERVICIO</Label>
               </div>
@@ -165,7 +186,7 @@ export function ServiceForm({ service, onSaved }: { service?: Service, onSaved?:
                 placeholder="Se generará automáticamente si se deja vacío"
                 disabled={!!service?.id} // Solo editable para nuevos servicios
               />
-            </div>
+            </div> */}
             <div className="flex flex-col gap-1">
               <div className="flex items-center gap-1 min-h-[24px]">
                 <Label className="whitespace-normal">ÁREA O SERVICIO *</Label>
@@ -200,7 +221,13 @@ export function ServiceForm({ service, onSaved }: { service?: Service, onSaved?:
                   <TooltipContent side="bottom" align="center" sideOffset={12} className="max-w-4xl break-words text-xs">{instructivo.phoneExtension}</TooltipContent>
                 </Tooltip>
               </div>
-              <Input value={formData.phoneExtension} onChange={e => handleChange("phoneExtension", e.target.value)} />
+              <Input
+                type="text"
+                value={formData.phoneExtension}
+                onChange={e => handleChange("phoneExtension", e.target.value)}
+                placeholder="Solo números"
+                pattern="[0-9]*"
+              />
             </div>
             <div className="flex flex-col gap-1">
               <div className="flex items-center gap-1 min-h-[24px]">
@@ -264,6 +291,14 @@ export function ServiceForm({ service, onSaved }: { service?: Service, onSaved?:
                   <SelectValue placeholder="Seleccione el tipo de servicio" />
                 </SelectTrigger>
                 <SelectContent>
+                  <SelectItem value="Unidad">Unidad</SelectItem>
+                  <SelectItem value="División">División</SelectItem>
+                  <SelectItem value="Servicio">Servicio</SelectItem>
+                  <SelectItem value="Departamento">Departamento</SelectItem>
+                  <SelectItem value="Subdirección">Subdirección</SelectItem>
+                  <SelectItem value="Coordinación">Coordinación</SelectItem>
+                  <SelectItem value="Área">Área</SelectItem>
+                  <SelectItem value="Laboratorio">Laboratorio</SelectItem>
                   <SelectItem value="clinical">Clínico</SelectItem>
                   <SelectItem value="administrative">Administrativo</SelectItem>
                   <SelectItem value="support">Apoyo</SelectItem>
@@ -312,7 +347,12 @@ export function ServiceForm({ service, onSaved }: { service?: Service, onSaved?:
                   <TooltipContent side="bottom" align="center" sideOffset={12} className="max-w-4xl break-words text-xs">{instructivo.consultorioNumber}</TooltipContent>
                 </Tooltip>
               </div>
-              <Input value={formData.consultorioNumber} onChange={e => handleChange("consultorioNumber", e.target.value)} />
+              <Input
+                type="text"
+                value={formData.consultorioNumber}
+                onChange={e => handleChange("consultorioNumber", e.target.value)}
+                placeholder="Ej: Consultorio 5, Sala 3, etc."
+              />
             </div>
             <div className="flex flex-col gap-1">
               <div className="flex items-center gap-1 min-h-[24px]">
@@ -324,7 +364,12 @@ export function ServiceForm({ service, onSaved }: { service?: Service, onSaved?:
                   <TooltipContent side="bottom" align="center" sideOffset={12} className="max-w-4xl break-words text-xs">{instructivo.externalControl}</TooltipContent>
                 </Tooltip>
               </div>
-              <Input value={formData.externalControl} onChange={e => handleChange("externalControl", e.target.value)} />
+              <Input
+                type="text"
+                value={formData.externalControl}
+                onChange={e => handleChange("externalControl", e.target.value)}
+                placeholder="Ej: Módulo A, Control 2, etc."
+              />
             </div>
             <div className="flex flex-col gap-1">
               <div className="flex items-center gap-1 min-h-[24px]">
@@ -336,7 +381,14 @@ export function ServiceForm({ service, onSaved }: { service?: Service, onSaved?:
                   <TooltipContent side="bottom" align="center" sideOffset={12} className="max-w-4xl break-words text-xs">{instructivo.consultorioPhone}</TooltipContent>
                 </Tooltip>
               </div>
-              <Input value={formData.consultorioPhone} onChange={e => handleChange("consultorioPhone", e.target.value)} />
+              <Input
+                type="number"
+                value={formData.consultorioPhone}
+                onChange={e => handleChange("consultorioPhone", e.target.value)}
+                placeholder="Solo números"
+                min="0"
+                max="9999"
+              />
             </div>
             <div className="flex flex-col gap-1">
               <div className="flex items-center gap-1 min-h-[24px]">
@@ -348,7 +400,14 @@ export function ServiceForm({ service, onSaved }: { service?: Service, onSaved?:
                   <TooltipContent side="bottom" align="center" sideOffset={12} className="max-w-4xl break-words text-xs">{instructivo.controlPhone}</TooltipContent>
                 </Tooltip>
               </div>
-              <Input value={formData.controlPhone} onChange={e => handleChange("controlPhone", e.target.value)} />
+              <Input
+                type="number"
+                value={formData.controlPhone}
+                onChange={e => handleChange("controlPhone", e.target.value)}
+                placeholder="Solo números"
+                min="0"
+                max="9999"
+              />
             </div>
             <div className="flex flex-col gap-1">
               <div className="flex items-center gap-1 min-h-[24px]">

@@ -1,5 +1,9 @@
 import bcrypt from 'bcryptjs'
 import { prisma } from './db'
+import { NextRequest } from 'next/server'
+import { jwtVerify } from 'jose'
+
+const JWT_SECRET = process.env.JWT_SECRET || 'supersecreto'
 
 export function isStrongPassword(password: string): boolean {
   // Mínimo 12 caracteres, al menos una mayúscula, una minúscula, un número y un símbolo
@@ -25,7 +29,7 @@ export async function createUser(userData: {
   lastName?: string
   department?: string
   phone?: string
-  performedBy?: number // id del admin que crea
+  serviceId?: string
 }) {
   // Validación temporal para pruebas: solo requiere al menos 4 caracteres
   if (!userData.password || userData.password.length < 4) {
@@ -42,6 +46,8 @@ export async function createUser(userData: {
       lastName: userData.lastName,
       department: userData.department,
       phone: userData.phone,
+      serviceId: userData.serviceId,
+      isActive: true,
     },
   })
   // Registrar en historial
@@ -83,6 +89,47 @@ export async function authenticateUser(username: string, password: string) {
     firstName: user.firstName,
     lastName: user.lastName,
     department: user.department,
+    serviceId: user.serviceId,
+  }
+}
+
+export async function verifyAuth(request: NextRequest) {
+  try {
+    const token = request.cookies.get('auth')?.value
+
+    if (!token) {
+      return { success: false, error: 'No token provided' }
+    }
+
+    const { payload } = await jwtVerify(token, new TextEncoder().encode(JWT_SECRET))
+    
+    if (!payload.id) {
+      return { success: false, error: 'Invalid token' }
+    }
+
+    const user = await prisma.user.findUnique({
+      where: { id: payload.id as number },
+      select: {
+        id: true,
+        username: true,
+        email: true,
+        role: true,
+        firstName: true,
+        lastName: true,
+        department: true,
+        serviceId: true,
+        isActive: true
+      }
+    })
+
+    if (!user || !user.isActive) {
+      return { success: false, error: 'User not found or inactive' }
+    }
+
+    return { success: true, user }
+  } catch (error) {
+    console.error('Auth verification error:', error)
+    return { success: false, error: 'Invalid token' }
   }
 }
 

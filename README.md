@@ -1,200 +1,127 @@
-# CAGPU - Catálogo de Atención
+# Sistema CAGPU
 
-Sistema de gestión de servicios hospitalarios desarrollado con Next.js y PostgreSQL.
+Sistema de gestión de usuarios, servicios y direcciones construido con Next.js 14, React, TypeScript y Prisma.
 
-## 🚀 Características
+## 🚀 Inicio Rápido
 
-- **Dashboard interactivo** para gestión de servicios hospitalarios
-- **Sistema de autenticación** con base de datos PostgreSQL
-- **Gestión de usuarios** con roles (admin/user)
-- **Catálogo de direcciones y servicios** médicos
-- **Sistema de notificaciones** en tiempo real
-- **Interfaz responsive** con tema claro/oscuro
-
-## 🛠️ Tecnologías
-
-- **Frontend**: Next.js 14, React 18, TypeScript
-- **UI**: Tailwind CSS, Radix UI, Framer Motion
-- **Base de datos**: PostgreSQL 15
-- **ORM**: Prisma
-- **Autenticación**: bcryptjs
-- **Gestión de paquetes**: pnpm
-
-## 📋 Prerrequisitos
-
-- Node.js 18+ instalado
-- pnpm instalado
-- PostgreSQL 15+ instalado y configurado
-
-## 🚀 Instalación y Configuración
-
-### 1. Clonar el repositorio
+### Instalación
 
 ```bash
-git clone <tu-repositorio>
+# Clonar repositorio
+git clone <repository-url>
 cd cagpu
-```
 
-### 2. Instalar dependencias
-
-```bash
+# Instalar dependencias
 pnpm install
-```
 
-### 3. Configurar la base de datos PostgreSQL
+# Configurar variables de entorno
+cp .env.example .env.local
+# Editar .env.local con tus configuraciones
 
-Crear una base de datos llamada `cagpu_db` en PostgreSQL:
+# Ejecutar migraciones
+npx prisma migrate dev
 
-```sql
-CREATE DATABASE cagpu_db;
-CREATE USER cagpu_user WITH PASSWORD 'cagpu_password';
-GRANT ALL PRIVILEGES ON DATABASE cagpu_db TO cagpu_user;
-```
-
-### 4. Configurar variables de entorno
-
-Crear archivo `.env.local`:
-
-```env
-DATABASE_URL="postgresql://cagpu_user:cagpu_password@localhost:5434/cagpu_db"
-NEXTAUTH_SECRET="your-secret-key-here"
-NEXTAUTH_URL="http://localhost:3000"
-```
-
-### 5. Generar script de inicialización de base de datos
-
-```bash
-node scripts/init-db.js
-```
-
-### 6. Configurar Prisma
-
-```bash
-pnpm prisma generate
-pnpm prisma db push
-```
-
-### 7. Ejecutar aplicación
-
-```bash
+# Iniciar desarrollo
 pnpm dev
 ```
 
-### 8. Acceder a la aplicación
+### Comandos Útiles
 
-- **Aplicación**: http://localhost:3000
+```bash
+# Desarrollo
+pnpm dev                    # Servidor de desarrollo
+pnpm build                  # Construir para producción
+pnpm start                  # Servidor de producción
 
-### 9. Credenciales de prueba
+# Base de datos
+npx prisma studio          # Interfaz visual de BD
+npx prisma migrate dev     # Ejecutar migraciones
+npx prisma generate        # Generar cliente Prisma
 
-- **Admin**: admin / admin123
-- **Usuario**: user / user123
+# Testing
+pnpm test                  # Ejecutar tests
+pnpm test:watch           # Tests en modo watch
+```
+
+## 📚 Documentación
+
+**La documentación completa del sistema está disponible en la aplicación web:**
+
+- **URL**: `http://localhost:3000/documentacion` ✅ **FUNCIONANDO**
+- **Acceso**: Desde el header principal (ícono de libro)
+- **Navegación**: Sidebar lateral con todas las secciones
+- **Estado**: Completamente funcional y accesible
+
+### Secciones de Documentación
+
+1. **Arquitectura del Sistema** - Estructura, tecnologías y patrones
+2. **Base de Datos** - Esquema, modelos y optimización
+3. **Autenticación y Autorización** - Seguridad y permisos
+4. **API y Endpoints** - Endpoints disponibles y validaciones
+5. **Componentes de la Interfaz** - Sistema de diseño y componentes
+6. **Páginas y Rutas** - Estructura de navegación
+7. **Estado y Gestión de Datos** - Hooks y contexto
+8. **Utilidades y Helpers** - Funciones auxiliares
+9. **Despliegue y Configuración** - Docker y CI/CD
+10. **Mantenimiento y Operaciones** - Scripts y mantenimiento
+
+## 🏗️ Arquitectura
+
+- **Frontend**: Next.js 14, React 18, TypeScript, Tailwind CSS
+- **Backend**: Next.js API Routes, Prisma ORM
+- **Base de Datos**: PostgreSQL
+- **Autenticación**: JWT, bcrypt
+- **Deployment**: Docker, Nginx, Systemd
 
 ## 📁 Estructura del Proyecto
 
 ```
 cagpu/
 ├── app/                    # App Router de Next.js
-│   ├── api/               # API Routes
-│   ├── dashboard/         # Página del dashboard
-│   ├── login/            # Página de login
-│   └── ...
-├── components/            # Componentes React
-│   ├── ui/               # Componentes de UI
-│   └── ...
-├── lib/                  # Utilidades y configuración
-│   ├── auth.ts          # Funciones de autenticación
-│   ├── db.ts            # Cliente de Prisma
-│   └── ...
-├── prisma/               # Esquema de base de datos
-│   └── schema.prisma
-├── scripts/              # Scripts de utilidad
-└── ...
+├── components/             # Componentes React
+├── lib/                    # Utilidades y configuración
+├── prisma/                 # Esquema y migraciones de BD
+├── scripts/                # Scripts de mantenimiento
+├── documentación/          # Documentación completa
+└── README.md               # Este archivo
 ```
 
-## 🗄️ Base de Datos
+## 🔧 Características
 
-### Tablas principales:
+- ✅ Autenticación y autorización robusta
+- ✅ Gestión completa de usuarios y roles
+- ✅ Sistema de notificaciones
+- ✅ Auditoría y logging
+- ✅ Interfaz responsive y accesible
+- ✅ API RESTful documentada
+- ✅ Base de datos optimizada
+- ✅ Scripts de mantenimiento automático
 
-- **users**: Usuarios del sistema
-- **directions**: Direcciones hospitalarias
-- **services**: Servicios médicos
-- **notifications**: Notificaciones del sistema
+## 📖 Documentación Detallada
 
-### Conexión:
+Para acceder a la documentación completa del sistema:
 
-- **Host**: localhost
-- **Puerto**: 5434
-- **Base de datos**: cagpu_db
-- **Usuario**: cagpu_user
-- **Contraseña**: cagpu_password
+1. Inicia el servidor de desarrollo: `pnpm dev`
+2. Abre tu navegador en: `http://localhost:3000`
+3. Haz clic en el ícono de libro 📚 en el header
+4. Navega por las diferentes secciones usando el sidebar
+5. **URL directa**: `http://localhost:3000/documentacion`
 
-## 🔐 Autenticación
+## 🤝 Contribución
 
-El sistema utiliza autenticación basada en sesiones con bcrypt para el hash de contraseñas.
-
-### Roles:
-
-- **admin**: Acceso completo al sistema
-- **user**: Acceso limitado a funcionalidades básicas
-
-## 🚀 Comandos Útiles
-
-```bash
-# Ejecutar aplicación en desarrollo
-pnpm dev
-
-# Construir aplicación para producción
-pnpm build
-
-# Ejecutar aplicación en producción
-pnpm start
-
-# Acceder a la base de datos
-psql -U cagpu_user -d cagpu_db -h localhost
-
-# Ejecutar migraciones de Prisma
-pnpm prisma migrate dev
-
-# Generar cliente de Prisma
-pnpm prisma generate
-
-# Abrir Prisma Studio
-pnpm prisma studio
-```
-
-## 🔧 Configuración de Producción
-
-### Variables de entorno recomendadas:
-
-```env
-NODE_ENV=production
-DATABASE_URL="postgresql://user:password@host:5434/database"
-NEXTAUTH_SECRET="your-super-secret-key"
-NEXTAUTH_URL="https://your-domain.com"
-```
-
-### Optimizaciones:
-
-- Usar un proxy reverso (nginx)
-- Configurar SSL/TLS
-- Implementar rate limiting
-- Configurar backups de base de datos
-
-## 📝 Notas de Desarrollo
-
-- La aplicación utiliza Next.js 14 con App Router
-- Los datos iniciales se cargan automáticamente al ejecutar el script de inicialización
-- El sistema de autenticación está preparado para JWT (pendiente de implementar)
-- Se puede usar Prisma Studio para administrar la base de datos de manera visual
-
-## 🤝 Contribuir
-
-1. Fork el proyecto
-2. Crea una rama para tu feature (`git checkout -b feature/AmazingFeature`)
-3. Commit tus cambios (`git commit -m 'Add some AmazingFeature'`)
-4. Push a la rama (`git push origin feature/AmazingFeature`)
-5. Abre un Pull Request
+1. Crear branch desde `main`
+2. Implementar cambios
+3. Ejecutar tests y linting
+4. Crear Pull Request
+5. Revisión de código
+6. Merge a `main`
 
 ## 📄 Licencia
 
-Este proyecto está bajo la Licencia MIT - ver el archivo [LICENSE](LICENSE) para más detalles.
+Este proyecto está bajo la licencia MIT.
+
+---
+
+**Última actualización**: Diciembre 2024  
+**Versión del sistema**: 1.0.0  
+**Mantenido por**: Equipo de Desarrollo CAGPU

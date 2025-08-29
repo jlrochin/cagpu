@@ -6,7 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { toast } from 'sonner'
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog'
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from '@/components/ui/dialog'
 import { UserCog, Plus, Edit, Trash2, History, Power, PowerOff } from 'lucide-react'
 import { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider } from '@/components/ui/tooltip'
 import { useRouter } from 'next/navigation'
@@ -161,7 +161,7 @@ export default function AdminUsuariosPage() {
         body: JSON.stringify(editForm),
       })
       const data = await res.json()
-      
+
       if (!res.ok) {
         setEditFormError(data.error || 'Error al actualizar usuario')
         setEditFormLoading(false)
@@ -204,7 +204,7 @@ export default function AdminUsuariosPage() {
       setUsers(users.map(u => u.id === confirmUser.id ? { ...u, isActive: !u.isActive } : u));
       setConfirmUser(null);
       setConfirmLoading(false);
-      
+
       // Forzar actualización de notificaciones disparando un evento personalizado
       window.dispatchEvent(new CustomEvent('notificationsUpdate'));
     } catch (err) {
@@ -222,7 +222,7 @@ export default function AdminUsuariosPage() {
     try {
       const res = await fetch(`/api/users/${user.id}/history`)
       const data = await res.json()
-      
+
       if (!res.ok) {
         toast.error(data.error || 'Error al cargar historial')
         return
@@ -308,14 +308,13 @@ export default function AdminUsuariosPage() {
                           </Tooltip>
                           <Tooltip>
                             <TooltipTrigger asChild>
-                              <Button 
-                                size="sm" 
+                              <Button
+                                size="sm"
                                 variant={user.isActive ? "destructive" : "default"}
-                                className={`px-2 py-1 h-8 text-xs flex gap-1 ${
-                                  user.isActive 
-                                    ? "bg-red-600 hover:bg-red-700" 
+                                className={`px-2 py-1 h-8 text-xs flex gap-1 ${user.isActive
+                                    ? "bg-red-600 hover:bg-red-700"
                                     : "bg-green-600 hover:bg-green-700 text-white"
-                                }`} 
+                                  }`}
                                 onClick={() => handleDeactivate(user)}
                                 disabled={currentUserId === user.id}
                               >
@@ -400,38 +399,38 @@ export default function AdminUsuariosPage() {
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <Label>Usuario *</Label>
-                <Input 
-                  name="username" 
-                  value={editForm.username} 
-                  onChange={handleEditInput} 
-                  required 
+                <Input
+                  name="username"
+                  value={editForm.username}
+                  onChange={handleEditInput}
+                  required
                 />
               </div>
               <div>
                 <Label>Email *</Label>
-                <Input 
-                  name="email" 
-                  type="email" 
-                  value={editForm.email} 
-                  onChange={handleEditInput} 
-                  required 
+                <Input
+                  name="email"
+                  type="email"
+                  value={editForm.email}
+                  onChange={handleEditInput}
+                  required
                 />
               </div>
               <div>
                 <Label>Contraseña (dejar vacío para no cambiar)</Label>
-                <Input 
-                  name="password" 
-                  type="password" 
-                  value={editForm.password} 
-                  onChange={handleEditInput} 
+                <Input
+                  name="password"
+                  type="password"
+                  value={editForm.password}
+                  onChange={handleEditInput}
                 />
               </div>
               <div>
                 <Label>Rol</Label>
-                <select 
-                  name="role" 
-                  value={editForm.role} 
-                  onChange={handleEditInput} 
+                <select
+                  name="role"
+                  value={editForm.role}
+                  onChange={handleEditInput}
                   className="w-full border rounded px-3 py-2"
                 >
                   <option value="user">Usuario</option>
@@ -440,53 +439,53 @@ export default function AdminUsuariosPage() {
               </div>
               <div>
                 <Label>Nombre</Label>
-                <Input 
-                  name="firstName" 
-                  value={editForm.firstName} 
-                  onChange={handleEditInput} 
+                <Input
+                  name="firstName"
+                  value={editForm.firstName}
+                  onChange={handleEditInput}
                 />
               </div>
               <div>
                 <Label>Apellido</Label>
-                <Input 
-                  name="lastName" 
-                  value={editForm.lastName} 
-                  onChange={handleEditInput} 
+                <Input
+                  name="lastName"
+                  value={editForm.lastName}
+                  onChange={handleEditInput}
                 />
               </div>
               <div>
                 <Label>Departamento</Label>
-                <Input 
-                  name="department" 
-                  value={editForm.department} 
-                  onChange={handleEditInput} 
+                <Input
+                  name="department"
+                  value={editForm.department}
+                  onChange={handleEditInput}
                 />
               </div>
               <div>
                 <Label>Teléfono</Label>
-                <Input 
-                  name="phone" 
-                  value={editForm.phone} 
-                  onChange={handleEditInput} 
+                <Input
+                  name="phone"
+                  value={editForm.phone}
+                  onChange={handleEditInput}
                 />
               </div>
             </div>
-            
+
             {editFormError && (
               <div className="text-red-500 text-sm">{editFormError}</div>
             )}
-            
+
             <DialogFooter>
-              <Button 
-                type="button" 
-                variant="outline" 
+              <Button
+                type="button"
+                variant="outline"
                 onClick={() => setEditUser(null)}
                 disabled={editFormLoading}
               >
                 Cancelar
               </Button>
-              <Button 
-                type="submit" 
+              <Button
+                type="submit"
                 disabled={editFormLoading}
                 className="bg-blue-600 hover:bg-blue-700"
               >
@@ -502,7 +501,7 @@ export default function AdminUsuariosPage() {
           <DialogHeader>
             <DialogTitle>Historial de cambios: {historyUser?.username}</DialogTitle>
           </DialogHeader>
-          
+
           {historyLoading ? (
             <div className="text-center py-8">
               <div className="text-lg">Cargando historial...</div>
@@ -517,18 +516,17 @@ export default function AdminUsuariosPage() {
                 <div key={change.id} className="border rounded-lg p-4 bg-gray-50 dark:bg-gray-800">
                   <div className="flex justify-between items-start mb-2">
                     <div className="flex items-center gap-2">
-                      <span className={`px-2 py-1 rounded text-xs font-bold ${
-                        change.action === 'create' ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200' :
-                        change.action === 'update' ? 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200' :
-                        change.action === 'deactivate' ? 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200' :
-                        change.action === 'activate' ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200' :
-                        'bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-200'
-                      }`}>
+                      <span className={`px-2 py-1 rounded text-xs font-bold ${change.action === 'create' ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200' :
+                          change.action === 'update' ? 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200' :
+                            change.action === 'deactivate' ? 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200' :
+                              change.action === 'activate' ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200' :
+                                'bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-200'
+                        }`}>
                         {change.action === 'create' ? 'Creación' :
-                         change.action === 'update' ? 'Actualización' :
-                         change.action === 'deactivate' ? 'Desactivación' :
-                         change.action === 'activate' ? 'Activación' :
-                         change.action}
+                          change.action === 'update' ? 'Actualización' :
+                            change.action === 'deactivate' ? 'Desactivación' :
+                              change.action === 'activate' ? 'Activación' :
+                                change.action}
                       </span>
                       <span className="text-sm text-gray-600 dark:text-gray-400">
                         por {change.performer}
@@ -557,6 +555,12 @@ export default function AdminUsuariosPage() {
                 ? `¿Estás seguro de que quieres desactivar al usuario "${confirmUser?.username}"?`
                 : `¿Estás seguro de que quieres activar al usuario "${confirmUser?.username}"?`}
             </DialogTitle>
+            <DialogDescription>
+              {confirmUser?.isActive
+                ? "Esta acción desactivará temporalmente el acceso del usuario al sistema. Puedes reactivarlo en cualquier momento."
+                : "Esta acción reactivará el acceso del usuario al sistema."
+              }
+            </DialogDescription>
           </DialogHeader>
           <div className="flex justify-end gap-2 mt-4">
             <Button variant="outline" onClick={() => setConfirmUser(null)} disabled={confirmLoading}>

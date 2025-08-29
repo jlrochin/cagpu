@@ -9,7 +9,7 @@ import { Button } from "@/components/ui/button"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { cn, formatTimeAgo } from "@/lib/utils"
 import { ScrollArea } from "@/components/ui/scroll-area"
-import { Drawer, DrawerContent, DrawerHeader, DrawerTitle, DrawerTrigger } from "@/components/ui/drawer"
+import { Drawer, DrawerContent, DrawerHeader, DrawerTitle, DrawerDescription, DrawerTrigger } from "@/components/ui/drawer"
 import { useMediaQuery } from "@/hooks/use-media-query"
 
 export function NotificationsPopover() {
@@ -35,21 +35,21 @@ export function NotificationsPopover() {
           console.error('Error al cargar notificaciones:', error);
         });
     }
-    
+
     fetchNotifications();
     const interval = setInterval(fetchNotifications, 5000); // cada 5 segundos para mejor responsividad
-    
+
     // Escuchar evento personalizado para actualizar notificaciones inmediatamente
     const handleNotificationUpdate = () => {
       fetchNotifications();
     };
-    
+
     if (typeof window !== 'undefined') {
       window.addEventListener('notificationsUpdate', handleNotificationUpdate);
     }
-    
-    return () => { 
-      isMounted = false; 
+
+    return () => {
+      isMounted = false;
       clearInterval(interval);
       if (typeof window !== 'undefined') {
         window.removeEventListener('notificationsUpdate', handleNotificationUpdate);
@@ -219,6 +219,7 @@ export function NotificationsPopover() {
       <DrawerContent>
         <DrawerHeader className="sr-only">
           <DrawerTitle>Notificaciones</DrawerTitle>
+          <DrawerDescription>Gestionar notificaciones del sistema</DrawerDescription>
         </DrawerHeader>
         <NotificationsList />
       </DrawerContent>

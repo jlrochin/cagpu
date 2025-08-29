@@ -25,6 +25,7 @@ model User {
   updatedAt    DateTime @updatedAt @map("updated_at")
   lastActiveAt DateTime? @map("last_active_at")
   isInvisible  Boolean  @default(false) @map("is_invisible")
+  serviceId    String?  @map("service_id") @db.VarChar(50)
 
   notifications Notification[]
   userChangeHistoryAsTarget   UserChangeHistory[] @relation("TargetUser")
@@ -40,6 +41,7 @@ model Direction {
   name          String    @db.VarChar(100)
   description   String?
   servicesCount Int       @default(0) @map("services_count")
+  displayOrder  Int       @default(0) @map("display_order")
 
   services Service[]
 

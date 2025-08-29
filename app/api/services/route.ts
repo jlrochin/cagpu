@@ -2,17 +2,44 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
 import { validateServiceData } from '@/lib/validation';
 import { generateServiceChangeDetails } from '@/lib/change-details';
+import { verifyAuth } from '@/lib/auth';
 
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
-    const services = await prisma.service.findMany({
-      include: {
-        direction: true,
-      },
-      orderBy: {
-        name: 'asc',
-      },
-    });
+    // Verificar autenticación
+    const authResult = await verifyAuth(request);
+    if (!authResult.success) {
+      return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
+    }
+
+    const { user } = authResult;
+    
+    // Si es admin, mostrar todos los servicios
+    // Si es usuario normal, mostrar solo su servicio
+    let services;
+    if (user.role === 'admin') {
+      services = await prisma.service.findMany({
+        include: {
+          direction: true,
+        },
+        orderBy: [
+          { direction: { displayOrder: 'asc' } },
+          { name: 'asc' }
+        ]
+      });
+    } else {
+      // Usuario normal solo ve su servicio
+      if (!user.serviceId) {
+        return NextResponse.json({ error: 'Usuario no tiene servicio asignado' }, { status: 403 });
+      }
+      
+      services = await prisma.service.findMany({
+        where: { id: user.serviceId },
+        include: {
+          direction: true,
+        }
+      });
+    }
 
     return NextResponse.json(services);
   } catch (error) {
@@ -26,6 +53,16 @@ export async function GET() {
 
 export async function POST(request: NextRequest) {
   try {
+    // Verificar autenticación y permisos de admin
+    const authResult = await verifyAuth(request);
+    if (!authResult.success) {
+      return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
+    }
+
+    if (authResult.user.role !== 'admin') {
+      return NextResponse.json({ error: 'Solo los administradores pueden crear servicios' }, { status: 403 });
+    }
+
     const body = await request.json();
     
     // Validar datos
@@ -69,8 +106,8 @@ export async function POST(request: NextRequest) {
       },
     });
 
-    // Obtener información del usuario que creó el servicio (desde headers o token)
-    const performedBy = 1; // Por ahora hardcodeado, deberías obtener del token/sesión
+    // Obtener información del usuario que creó el servicio
+    const performedBy = authResult.user.id;
 
     // Generar detalles del cambio
     const changeDetails = generateServiceChangeDetails('create', service.name, service.direction.name);
@@ -126,13 +163,33 @@ export async function PUT(request: NextRequest) {
   try {
     const body = await request.json();
     
+    // Debug: mostrar datos recibidos
+    console.log('Datos recibidos en PUT /api/services:', body)
+    
     // Validar datos
     const validation = validateServiceData(body);
     if (!validation.isValid) {
+      console.log('Errores de validación:', validation.errors)
       return NextResponse.json(
         { error: 'Datos inválidos', details: validation.errors },
         { status: 400 }
       );
+    }
+
+    // Verificar autenticación
+    const authResult = await verifyAuth(request);
+    if (!authResult.success) {
+      return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
+    }
+
+    const { user } = authResult;
+    const performedBy = user.id;
+
+    // Verificar permisos: solo admin puede editar cualquier servicio, usuario normal solo su servicio
+    if (user.role !== 'admin') {
+      if (!user.serviceId || user.serviceId !== body.id) {
+        return NextResponse.json({ error: 'Solo puede editar su propio servicio' }, { status: 403 });
+      }
     }
 
     // Verificar que el servicio existe
@@ -167,10 +224,13 @@ export async function PUT(request: NextRequest) {
     });
 
     // Obtener información del usuario que actualizó el servicio
-    const performedBy = 1; // Por ahora hardcodeado, deberías obtener del token/sesión
+    // performedBy ya está definido arriba
 
     // Generar detalles legibles de los cambios
     const changeDetails = generateServiceChangeDetails('update', updatedService.name, updatedService.direction.name, existingService, updatedService);
+    
+    // Debug: mostrar detalles de cambios
+    console.log('Detalles de cambios generados:', changeDetails)
     
     // Registrar en historial de cambios
     await prisma.userChangeHistory.create({

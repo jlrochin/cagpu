@@ -53,7 +53,7 @@ export function generateUserChangeDetails(oldUser: any, newUser: any): string {
 
 export function generateServiceChangeDetails(action: 'create' | 'update', serviceName: string, directionName: string, oldService?: any, newService?: any): string {
   if (action === 'create') {
-    return `Servicio "${serviceName}" creado en ${directionName}`;
+    return `Nuevo servicio "${serviceName}" creado en ${directionName}`;
   }
 
   if (!oldService || !newService) {
@@ -64,45 +64,96 @@ export function generateServiceChangeDetails(action: 'create' | 'update', servic
   
   // Mapeo de campos a nombres legibles
   const fieldLabels: Record<string, string> = {
-    name: 'nombre',
-    responsiblePerson: 'responsable',
-    phoneExtension: 'extensión',
-    serviceType: 'tipo',
+    name: 'nombre del servicio',
+    responsiblePerson: 'persona responsable',
+    phoneExtension: 'extensión telefónica',
+    serviceType: 'tipo de servicio',
     location: 'ubicación',
     description: 'descripción',
-    directionId: 'dirección'
+    directionId: 'dirección asignada',
+    isActive: 'estado del servicio'
   };
 
-  // Mapeo de tipos de servicio
+  // Mapeo de tipos de servicio más completo
   const serviceTypeLabels: Record<string, string> = {
-    clinical: 'clínico',
-    administrative: 'administrativo',
-    support: 'apoyo',
-    specialized: 'especializado'
+    clinical: 'Clínico',
+    administrative: 'Administrativo',
+    support: 'Apoyo',
+    specialized: 'Especializado',
+    'Unidad': 'Unidad',
+    'División': 'División',
+    'Servicio': 'Servicio',
+    'Departamento': 'Departamento',
+    'Subdirección': 'Subdirección',
+    'Coordinación': 'Coordinación',
+    'Área': 'Área',
+    'Laboratorio': 'Laboratorio'
   };
 
-  // Comparar campos relevantes
-  const fieldsToCheck = ['name', 'responsiblePerson', 'phoneExtension', 'serviceType', 'location', 'description'];
+  // Mapeo de direcciones para mostrar nombres más legibles
+  const directionLabels: Record<string, string> = {
+    'DIRECCION_GENERAL': 'Dirección General',
+    'DIRECCION_MEDICA': 'Dirección Médica',
+    'DIRECCION_INVESTIGACION_ENSENANZA': 'Dirección de Investigación y Enseñanza',
+    'DIRECCION_DESARROLLO_VINCULACION_INSTITUCIONAL': 'Dirección de Desarrollo y Vinculación Institucional',
+    'DIRECCION_ADMINISTRACION': 'Dirección de Administración',
+    'DIRECCION_ENFERMERIA': 'Dirección de Enfermería'
+  };
+
+  // Comparar campos relevantes, incluyendo directionId
+  const fieldsToCheck = ['name', 'responsiblePerson', 'phoneExtension', 'serviceType', 'location', 'description', 'directionId', 'isActive'];
   
   fieldsToCheck.forEach(key => {
-    if (oldService[key] !== newService[key]) {
+    const oldValue = oldService[key];
+    const newValue = newService[key];
+    
+    // Solo reportar cambios si realmente hay diferencia
+    if (oldValue !== newValue) {
       const fieldName = fieldLabels[key] || key;
-      let oldValue = oldService[key] || '(vacío)';
-      let newValue = newService[key] || '(vacío)';
       
-      // Traducir tipos de servicio
-      if (key === 'serviceType') {
-        oldValue = serviceTypeLabels[oldValue] || oldValue;
-        newValue = serviceTypeLabels[newValue] || newValue;
+      // Formatear valores para mejor legibilidad
+      let oldDisplayValue = oldValue;
+      let newDisplayValue = newValue;
+      
+      // Manejar valores vacíos o nulos
+      if (oldValue === null || oldValue === undefined || oldValue === '') {
+        oldDisplayValue = '(no especificado)';
       }
       
-      changes.push(`${fieldName}: "${oldValue}" → "${newValue}"`);
+      if (newValue === null || newValue === undefined || newValue === '') {
+        newDisplayValue = '(no especificado)';
+      }
+      
+      // Formatear según el tipo de campo
+      if (key === 'serviceType') {
+        oldDisplayValue = serviceTypeLabels[oldValue] || oldValue;
+        newDisplayValue = serviceTypeLabels[newValue] || newValue;
+      }
+      
+      if (key === 'directionId') {
+        oldDisplayValue = directionLabels[oldValue] || oldValue;
+        newDisplayValue = directionLabels[newValue] || newValue;
+      }
+      
+      if (key === 'isActive') {
+        oldDisplayValue = oldValue ? 'Activo' : 'Inactivo';
+        newDisplayValue = newValue ? 'Activo' : 'Inactivo';
+      }
+      
+      // Agregar el cambio con formato mejorado
+      changes.push(`${fieldName}: "${oldDisplayValue}" → "${newDisplayValue}"`);
     }
   });
 
   if (changes.length === 0) {
-    return `Servicio "${serviceName}" actualizado (sin cambios específicos)`;
+    return `Servicio "${serviceName}" actualizado sin cambios en los campos principales`;
   }
 
-  return `Servicio "${serviceName}" actualizado: ${changes.join(', ')}`;
+  // Limitar la longitud para evitar mensajes muy largos
+  const changeText = changes.join(', ');
+  if (changeText.length > 200) {
+    return `Servicio "${serviceName}" actualizado: ${changes.length} campo(s) modificado(s)`;
+  }
+
+  return `Servicio "${serviceName}" actualizado: ${changeText}`;
 } 
