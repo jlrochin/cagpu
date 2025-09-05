@@ -118,6 +118,8 @@ export function AnimatedBackground() {
     // FUNCIÓN: ANIMACIÓN PRINCIPAL
     // ============================================================================
     const animate = () => {
+      if (!ctx) return;
+
       // Limpiar canvas
       ctx.clearRect(0, 0, canvas.width, canvas.height);
 

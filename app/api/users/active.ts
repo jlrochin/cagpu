@@ -7,6 +7,9 @@ export async function GET() {
     where: {
       lastActiveAt: { gte: fiveMinutesAgo },
       isInvisible: false,
+      role: {
+        not: 'developer' // Excluir usuarios developer del conteo
+      }
     },
   });
   return NextResponse.json({ activeUsers: count });

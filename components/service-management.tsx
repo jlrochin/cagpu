@@ -6,7 +6,7 @@ import { Input } from '@/components/ui/input'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Badge } from '@/components/ui/badge'
-import { Search, Edit, Loader2 } from 'lucide-react'
+import { Search, Edit, Loader2, Eye } from 'lucide-react'
 import { ServiceForm } from './service-form'
 import { useAuth } from '@/hooks/use-auth'
 
@@ -27,9 +27,10 @@ interface Service {
 }
 
 export function ServiceManagement() {
-  const { user, loading: authLoading, isAdmin } = useAuth()
+  const { user, loading: authLoading, isAdmin, isDeveloper } = useAuth()
   const [services, setServices] = useState<Service[]>([])
   const [modalService, setModalService] = useState<Service | null>(null)
+  const [viewService, setViewService] = useState<Service | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [searchTerm, setSearchTerm] = useState('')
@@ -57,14 +58,14 @@ export function ServiceManagement() {
   const filteredServices = useMemo(() => {
     let filtered = services
 
-    // Para usuarios no-admin, mostrar solo su servicio asignado
-    if (!isAdmin && user?.serviceId) {
+    // Para usuarios no-admin y no-developer, mostrar solo su servicio asignado
+    if (!isAdmin && !isDeveloper && user?.serviceId) {
       filtered = filtered.filter(service => service.id === user.serviceId)
       return filtered
     }
 
-    // Para admins, aplicar filtros normales
-    if (isAdmin) {
+    // Para admins y developers, aplicar filtros normales
+    if (isAdmin || isDeveloper) {
       // Filtrar por dirección seleccionada
       if (selectedDirection !== 'all') {
         filtered = filtered.filter(service => service.directionId === selectedDirection)
@@ -82,7 +83,7 @@ export function ServiceManagement() {
     }
 
     return filtered
-  }, [searchTerm, services, selectedDirection, isAdmin, user?.serviceId])
+  }, [searchTerm, services, selectedDirection, isAdmin, isDeveloper, user?.serviceId])
 
   const loadData = useCallback(async () => {
     try {
@@ -119,10 +120,18 @@ export function ServiceManagement() {
     setModalService(service)
   }, [])
 
+  const handleViewService = useCallback((service: Service) => {
+    setViewService(service)
+  }, [])
+
   const handleCloseModal = useCallback(() => {
     setModalService(null)
     loadData() // Recargar datos después de editar
   }, [loadData])
+
+  const handleCloseViewModal = useCallback(() => {
+    setViewService(null)
+  }, [])
 
   const handleExport = useCallback(() => {
     const csvContent = [
@@ -213,16 +222,16 @@ export function ServiceManagement() {
       <div className="flex justify-between items-start">
         <div>
           <h1 className="text-2xl font-bold">
-            {isAdmin ? 'Gestión de Servicios' : 'Mi Servicio'}
+            {(isAdmin || isDeveloper) ? 'Gestión de Servicios' : 'Mi Servicio'}
           </h1>
           <p className="text-muted-foreground">
-            {isAdmin
+            {(isAdmin || isDeveloper)
               ? 'Acceda y modifique la información de los servicios'
               : 'Información de su servicio asignado'
             }
           </p>
         </div>
-        {isAdmin && (
+        {(isAdmin || isDeveloper) && (
           <div className="flex gap-3">
             <Button variant="outline" className="btn-optimized" onClick={handleExport}>
               <svg className="h-4 w-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -243,8 +252,8 @@ export function ServiceManagement() {
         )}
       </div>
 
-      {/* Search and Controls - Solo para Admin */}
-      {isAdmin && (
+      {/* Search and Controls - Solo para Admin y Developer */}
+      {(isAdmin || isDeveloper) && (
         <div className="flex gap-3 items-center">
           <div className="relative flex-1">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
@@ -291,8 +300,8 @@ export function ServiceManagement() {
         </div>
       )}
 
-      {/* Direction Tabs - Solo para Admin */}
-      {isAdmin && directions.length > 0 && (
+      {/* Direction Tabs - Solo para Admin y Developer */}
+      {(isAdmin || isDeveloper) && directions.length > 0 && (
         <div className="flex flex-wrap gap-2">
           <button
             onClick={() => setSelectedDirection('all')}
@@ -320,7 +329,7 @@ export function ServiceManagement() {
 
       {/* Services Count */}
       <div className="text-sm text-muted-foreground">
-        {isAdmin ? (
+        {(isAdmin || isDeveloper) ? (
           <>
             {filteredServices.length} servicio{filteredServices.length !== 1 ? 's' : ''} encontrado{filteredServices.length !== 1 ? 's' : ''}
             {(searchTerm || selectedDirection !== 'all') && filteredServices.length !== services.length && (
@@ -384,15 +393,26 @@ export function ServiceManagement() {
                       </p>
                     </div>
                   </div>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="w-full btn-optimized"
-                    onClick={() => handleEditService(service)}
-                  >
-                    <Edit className="h-4 w-4 mr-2" />
-                    Editar servicio
-                  </Button>
+                  <div className="flex gap-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="flex-1 btn-optimized"
+                      onClick={() => handleViewService(service)}
+                    >
+                      <Eye className="h-4 w-4 mr-2" />
+                      Ver
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="flex-1 btn-optimized"
+                      onClick={() => handleEditService(service)}
+                    >
+                      <Edit className="h-4 w-4 mr-2" />
+                      Editar
+                    </Button>
+                  </div>
                 </CardContent>
               </Card>
             ))}
@@ -423,15 +443,26 @@ export function ServiceManagement() {
                         </div>
                       </div>
                     </div>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      className="btn-optimized ml-4"
-                      onClick={() => handleEditService(service)}
-                    >
-                      <Edit className="h-4 w-4 mr-2" />
-                      Editar
-                    </Button>
+                    <div className="flex gap-2 ml-4">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="btn-optimized"
+                        onClick={() => handleViewService(service)}
+                      >
+                        <Eye className="h-4 w-4 mr-2" />
+                        Ver
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="btn-optimized"
+                        onClick={() => handleEditService(service)}
+                      >
+                        <Edit className="h-4 w-4 mr-2" />
+                        Editar
+                      </Button>
+                    </div>
                   </div>
                 </CardContent>
               </Card>
@@ -456,12 +487,12 @@ export function ServiceManagement() {
           ) : (
             <div className="text-center">
               <p className="text-lg text-muted-foreground mb-4">
-                {isAdmin
+                {(isAdmin || isDeveloper)
                   ? 'No hay servicios disponibles en este momento.'
                   : 'No se encontró su servicio asignado. Contacte al administrador.'
                 }
               </p>
-              {isAdmin && (searchTerm || selectedDirection !== 'all') && (
+              {(isAdmin || isDeveloper) && (searchTerm || selectedDirection !== 'all') && (
                 <Button
                   variant="outline"
                   onClick={clearFilters}
@@ -531,8 +562,74 @@ export function ServiceManagement() {
 
           {/* Contenido del formulario */}
           <div className="px-1">
-            {modalService && <ServiceForm service={modalService} onSaved={handleCloseModal} />}
+            {modalService && <ServiceForm service={{ ...modalService, responsiblePerson: modalService.responsiblePerson || '', phoneExtension: modalService.phoneExtension || '', serviceType: modalService.serviceType || '', location: modalService.location || '', description: modalService.description || '' }} onSaved={handleCloseModal} />}
           </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* View Service Modal */}
+      <Dialog open={!!viewService} onOpenChange={open => { if (!open) handleCloseViewModal() }}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle className="text-xl font-semibold">
+              Información del Servicio
+            </DialogTitle>
+            <DialogDescription>
+              Detalles completos del servicio seleccionado
+            </DialogDescription>
+          </DialogHeader>
+          {viewService && (
+            <div className="space-y-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <h3 className="font-semibold text-lg mb-2">{viewService.name}</h3>
+                  <Badge variant="secondary" className="mb-2">
+                    {getServiceTypeLabel(viewService.serviceType)}
+                  </Badge>
+                  <p className="text-sm text-muted-foreground">{viewService.direction.name}</p>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="text-sm font-medium text-muted-foreground">Responsable:</label>
+                  <p className="text-sm">{viewService.responsiblePerson || 'No especificado'}</p>
+                </div>
+                <div>
+                  <label className="text-sm font-medium text-muted-foreground">Extensión:</label>
+                  <p className="text-sm">{viewService.phoneExtension || 'No especificado'}</p>
+                </div>
+                <div className="md:col-span-2">
+                  <label className="text-sm font-medium text-muted-foreground">Ubicación:</label>
+                  <p className="text-sm">{viewService.location || 'No especificado'}</p>
+                </div>
+                <div className="md:col-span-2">
+                  <label className="text-sm font-medium text-muted-foreground">Descripción del servicio:</label>
+                  <p className="text-sm text-muted-foreground">
+                    {viewService.description || 'Sin descripción'}
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex justify-end gap-2 pt-4">
+                <Button
+                  variant="outline"
+                  onClick={handleCloseViewModal}
+                >
+                  Cerrar
+                </Button>
+                <Button
+                  onClick={() => {
+                    handleCloseViewModal()
+                    handleEditService(viewService)
+                  }}
+                >
+                  <Edit className="h-4 w-4 mr-2" />
+                  Editar
+                </Button>
+              </div>
+            </div>
+          )}
         </DialogContent>
       </Dialog>
     </div>

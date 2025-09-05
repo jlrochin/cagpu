@@ -48,12 +48,14 @@ export function useAuth() {
 
   const isAdmin = useMemo(() => user?.role === 'admin', [user?.role])
   const isServiceUser = useMemo(() => user?.role === 'service_user', [user?.role])
+  const isDeveloper = useMemo(() => user?.role === 'developer', [user?.role])
 
   return { 
     user, 
     loading, 
     isAdmin, 
     isServiceUser,
+    isDeveloper,
     refreshAuth: checkAuth 
   }
 }

@@ -30,7 +30,7 @@ export async function PUT(
     }
 
     // Verificar si el usuario autenticado está activo
-    const authUser = await prisma.user.findUnique({ where: { id: performedBy } })
+    const authUser = await prisma.user.findUnique({ where: { id: performedBy as number } })
     if (!authUser || !authUser.isActive) {
       return NextResponse.json({ error: 'Usuario inactivo o no encontrado' }, { status: 403 })
     }
@@ -121,7 +121,7 @@ export async function PUT(
       data: {
         targetUserId: userId,
         action: 'update',
-        performedBy,
+        performedBy: performedBy as number,
         details: changeDetails,
       },
     })
@@ -163,7 +163,7 @@ export async function PATCH(
     }
 
     // Verificar si el usuario autenticado está activo
-    const authUser = await prisma.user.findUnique({ where: { id: performedBy } })
+    const authUser = await prisma.user.findUnique({ where: { id: performedBy as number } })
     if (!authUser || !authUser.isActive) {
       return NextResponse.json({ error: 'Usuario inactivo o no encontrado' }, { status: 403 })
     }
@@ -225,13 +225,13 @@ export async function PATCH(
       data: {
         targetUserId: userId,
         action: actionType,
-        performedBy,
+        performedBy: performedBy as number,
         details: `Usuario ${actionType === 'deactivate' ? 'desactivado' : 'activado'}`,
       },
     })
 
     // Obtener el usuario que realiza la acción
-    const adminUser = await prisma.user.findUnique({ where: { id: performedBy } });
+    const adminUser = await prisma.user.findUnique({ where: { id: performedBy as number } });
     
     // Crear notificación para el usuario afectado
     await prisma.notification.create({

@@ -2,8 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { authenticateUser } from '@/lib/auth'
 import { prisma } from '@/lib/db'
 import { SignJWT } from 'jose'
-
-const JWT_SECRET = process.env.JWT_SECRET || 'supersecreto'
+import { JWT_SECRET, JWT_EXPIRES_IN } from '@/lib/config'
 
 export async function POST(request: NextRequest) {
   try {
@@ -75,7 +74,7 @@ export async function POST(request: NextRequest) {
       })
         .setProtectedHeader({ alg: 'HS256' })
         .setIssuedAt()
-        .setExpirationTime('1d')
+        .setExpirationTime(JWT_EXPIRES_IN)
         .sign(new TextEncoder().encode(JWT_SECRET));
       response.cookies.set('auth', jwt, {
         httpOnly: true,

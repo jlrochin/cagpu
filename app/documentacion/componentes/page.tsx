@@ -188,7 +188,7 @@ export default function ComponentesPage() {
                 <div className="ml-4">size?: "default" | "sm" | "lg" | "icon"</div>
                 <div className="ml-4">disabled?: boolean</div>
                 <div className="ml-4">children: React.ReactNode</div>
-                <div className="ml-4">onClick?: () => void</div>
+                <div className="ml-4">onClick?: () =&gt; void</div>
                 <div>{`}`}</div>
               </div>
             </div>
@@ -239,7 +239,7 @@ export default function ComponentesPage() {
               <div className="bg-slate-900 text-slate-100 rounded p-3 font-mono text-xs">
                 <div>interface DialogProps {`{`}</div>
                 <div className="ml-4">open: boolean</div>
-                <div className="ml-4">onOpenChange: (open: boolean) => void</div>
+                <div className="ml-4">onOpenChange: (open: boolean) =&gt; void</div>
                 <div className="ml-4">children: React.ReactNode</div>
                 <div>{`}`}</div>
               </div>
@@ -476,7 +476,7 @@ export default function ComponentesPage() {
               <div>// Component.test.tsx</div>
               <div className="mt-2">{`import { render, screen } from '@testing-library/react'`}</div>
               <div>{`import { Button } from './Button'`}</div>
-              <div className="mt-2">test('renders button with correct text', () => {`{`}</div>
+              <div className="mt-2">test('renders button with correct text', () =&gt; {`{`}</div>
               <div className="ml-4">render(&lt;Button&gt;Click me&lt;/Button&gt;)</div>
               <div className="ml-4">expect(screen.getByText('Click me')).toBeInTheDocument()</div>
               <div>{`}`})</div>
@@ -487,7 +487,7 @@ export default function ComponentesPage() {
             <h4 className="font-semibold text-secondary-900 mb-2">Testing de Integración</h4>
             <div className="bg-slate-900 text-slate-100 rounded-lg p-4 font-mono text-sm">
               <div>// Form.test.tsx</div>
-              <div className="mt-2">{`test('submits form with user data', async () => {`}</div>
+              <div className="mt-2">{`test('submits form with user data', async () =&gt; {`}</div>
               <div className="ml-4">{`const mockSubmit = jest.fn()`}</div>
               <div className="ml-4">{`render(<UserForm onSubmit={mockSubmit} />)`}</div>
               <div className="ml-4">// Simular interacciones del usuario...</div>

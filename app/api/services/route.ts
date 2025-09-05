@@ -14,10 +14,10 @@ export async function GET(request: NextRequest) {
 
     const { user } = authResult;
     
-    // Si es admin, mostrar todos los servicios
+    // Si es admin o developer, mostrar todos los servicios
     // Si es usuario normal, mostrar solo su servicio
     let services;
-    if (user.role === 'admin') {
+    if (user && (user.role === 'admin' || user.role === 'developer')) {
       services = await prisma.service.findMany({
         include: {
           direction: true,
@@ -29,7 +29,7 @@ export async function GET(request: NextRequest) {
       });
     } else {
       // Usuario normal solo ve su servicio
-      if (!user.serviceId) {
+      if (!user || !user.serviceId) {
         return NextResponse.json({ error: 'Usuario no tiene servicio asignado' }, { status: 403 });
       }
       
@@ -59,8 +59,8 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
     }
 
-    if (authResult.user.role !== 'admin') {
-      return NextResponse.json({ error: 'Solo los administradores pueden crear servicios' }, { status: 403 });
+    if (!authResult.user || (authResult.user.role !== 'admin' && authResult.user.role !== 'developer')) {
+      return NextResponse.json({ error: 'Solo los administradores y desarrolladores pueden crear servicios' }, { status: 403 });
     }
 
     const body = await request.json();
@@ -183,10 +183,14 @@ export async function PUT(request: NextRequest) {
     }
 
     const { user } = authResult;
+    if (!user) {
+      return NextResponse.json({ error: 'Usuario no encontrado' }, { status: 401 });
+    }
+    
     const performedBy = user.id;
 
-    // Verificar permisos: solo admin puede editar cualquier servicio, usuario normal solo su servicio
-    if (user.role !== 'admin') {
+    // Verificar permisos: admin y developer pueden editar cualquier servicio, usuario normal solo su servicio
+    if (user.role !== 'admin' && user.role !== 'developer') {
       if (!user.serviceId || user.serviceId !== body.id) {
         return NextResponse.json({ error: 'Solo puede editar su propio servicio' }, { status: 403 });
       }

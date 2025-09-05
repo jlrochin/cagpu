@@ -29,7 +29,7 @@ export function NotificationsPopover() {
           if (!isMounted) return;
           const notificationsList = data.notifications || [];
           setNotifications(notificationsList);
-          setUnreadCount(notificationsList.filter(n => !n.isRead).length);
+          setUnreadCount(notificationsList.filter((n: any) => !n.isRead).length);
         })
         .catch(error => {
           console.error('Error al cargar notificaciones:', error);

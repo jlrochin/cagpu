@@ -5,7 +5,12 @@ import { createUser } from '@/lib/auth'
 export async function GET() {
   try {
     const users = await prisma.user.findMany({
-      where: { isInvisible: false },
+      where: { 
+        isInvisible: false,
+        role: {
+          not: 'developer' // Excluir usuarios con rol developer
+        }
+      },
       select: {
         id: true,
         username: true,

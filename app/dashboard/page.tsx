@@ -4,6 +4,7 @@ import { AnalyticsDashboard } from "@/components/analytics-dashboard"
 import { DashboardOverview } from "@/components/dashboard-overview"
 import { Header } from "@/components/header"
 import { ServiceManagement } from "@/components/service-management"
+import SecurityDashboard from "@/components/security-dashboard"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Toaster } from "@/components/ui/toaster"
 import React from "react"
@@ -163,7 +164,7 @@ function AuditoriaLog({ logs, page, total, onPageChange }: { logs: any[], page: 
 }
 
 export default function Dashboard() {
-  const { user, loading: authLoading, isAdmin } = useAuth()
+  const { user, loading: authLoading, isAdmin, isDeveloper } = useAuth()
   const [tab, setTab] = React.useState('services')
   const [history, setHistory] = React.useState<any[]>([])
   const [audit, setAudit] = React.useState<any[]>([])
@@ -172,17 +173,17 @@ export default function Dashboard() {
 
   React.useEffect(() => {
     if (!authLoading && user) {
-      // Cargar historial de cambios recientes solo para admins
-      if (isAdmin) {
+      // Cargar historial de cambios recientes para admins y developers
+      if (isAdmin || isDeveloper) {
         fetch('/api/user-change-history', { credentials: 'include' })
           .then(res => res.json())
           .then(data => setHistory(data.history || []));
       }
     }
-  }, [authLoading, user, isAdmin])
+  }, [authLoading, user, isAdmin, isDeveloper])
 
   React.useEffect(() => {
-    if (isAdmin) {
+    if (isAdmin || isDeveloper) {
       fetch(`/api/audit-log?page=${auditPage}&limit=10`, { credentials: 'include' })
         .then(res => res.json())
         .then(data => {
@@ -190,13 +191,13 @@ export default function Dashboard() {
           setAuditTotal(data.total || 0)
         });
     }
-  }, [auditPage, isAdmin])
+  }, [auditPage, isAdmin, isDeveloper])
 
   React.useEffect(() => {
-    if (!isAdmin) {
+    if (!isAdmin && !isDeveloper) {
       setTab('services')
     }
-  }, [isAdmin])
+  }, [isAdmin, isDeveloper])
   // Mostrar loading mientras se verifica la autenticación
   if (authLoading) {
     return (
@@ -235,7 +236,7 @@ export default function Dashboard() {
         <Tabs value={tab} onValueChange={setTab} className="space-y-6">
           <div className="flex justify-between items-center">
             <TabsList className="bg-muted/80 p-1">
-              {isAdmin && (
+              {(isAdmin || isDeveloper) && (
                 <TabsTrigger value="dashboard">Dashboard</TabsTrigger>
               )}
               <TabsTrigger
@@ -244,13 +245,14 @@ export default function Dashboard() {
               >
                 Servicios
               </TabsTrigger>
-              {isAdmin && <TabsTrigger value="analytics">Analíticas</TabsTrigger>}
-              {isAdmin && <TabsTrigger value="admin">Administrador</TabsTrigger>}
-              {isAdmin && <TabsTrigger value="history">Cambios Recientes</TabsTrigger>}
-              {isAdmin && <TabsTrigger value="audit">Auditoría</TabsTrigger>}
+              {(isAdmin || isDeveloper) && <TabsTrigger value="analytics">Analíticas</TabsTrigger>}
+              {(isAdmin || isDeveloper) && <TabsTrigger value="admin">Administrador</TabsTrigger>}
+              {(isAdmin || isDeveloper) && <TabsTrigger value="security">Seguridad</TabsTrigger>}
+              {(isAdmin || isDeveloper) && <TabsTrigger value="history">Cambios Recientes</TabsTrigger>}
+              {(isAdmin || isDeveloper) && <TabsTrigger value="audit">Auditoría</TabsTrigger>}
             </TabsList>
           </div>
-          {isAdmin && (
+          {(isAdmin || isDeveloper) && (
             <TabsContent value="dashboard">
               <DashboardOverview />
             </TabsContent>
@@ -258,22 +260,27 @@ export default function Dashboard() {
           <TabsContent value="services">
             <ServiceManagement />
           </TabsContent>
-          {isAdmin && (
+          {(isAdmin || isDeveloper) && (
             <TabsContent value="analytics">
               <AnalyticsDashboard />
             </TabsContent>
           )}
-          {isAdmin && (
+          {(isAdmin || isDeveloper) && (
             <TabsContent value="admin">
               <AdminUsuariosPage />
             </TabsContent>
           )}
-          {isAdmin && (
+          {(isAdmin || isDeveloper) && (
+            <TabsContent value="security">
+              <SecurityDashboard />
+            </TabsContent>
+          )}
+          {(isAdmin || isDeveloper) && (
             <TabsContent value="history">
               <CambiosRecientes history={history} />
             </TabsContent>
           )}
-          {isAdmin && (
+          {(isAdmin || isDeveloper) && (
             <TabsContent value="audit">
               <AuditoriaLog logs={audit} page={auditPage} total={auditTotal} onPageChange={setAuditPage} />
             </TabsContent>

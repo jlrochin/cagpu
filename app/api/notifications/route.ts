@@ -49,7 +49,7 @@ export async function GET(request: NextRequest) {
     let where: any = {};
     let baseWhere: any = {};
 
-    if (user.role === 'admin' || user.role === 'developer') {
+    if (user && (user.role === 'admin' || user.role === 'developer')) {
       // Los administradores ven todas las notificaciones (excepto login/logout)
       baseWhere = {
         AND: [
@@ -143,7 +143,7 @@ export async function PATCH(request: NextRequest) {
     }
 
     // Verificar permisos: solo el dueño o admin/developer puede marcar como leída
-    if (notification.userId !== userId && user.role !== 'admin' && user.role !== 'developer') {
+    if (notification.userId !== userId && user && user.role !== 'admin' && user.role !== 'developer') {
       return NextResponse.json({ error: 'No autorizado' }, { status: 403 });
     }
 
@@ -177,7 +177,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Solo admin/developer puede crear notificaciones para otros usuarios
-    if (userId && userId !== user.id && user.role !== 'admin' && user.role !== 'developer') {
+    if (userId && user && userId !== user.id && user.role !== 'admin' && user.role !== 'developer') {
       return NextResponse.json({ error: 'No autorizado para crear notificaciones para otros usuarios' }, { status: 403 });
     }
 
@@ -194,7 +194,7 @@ export async function POST(request: NextRequest) {
       data: {
         title,
         message,
-        userId: userId || user.id,
+        userId: userId || (user ? user.id : null),
         serviceId
       },
       include: {
@@ -260,7 +260,7 @@ export async function DELETE(request: NextRequest) {
     }
 
     // Verificar permisos: solo el dueño o admin/developer puede eliminar
-    if (notification.userId !== userId && user.role !== 'admin' && user.role !== 'developer') {
+    if (notification.userId !== userId && user && user.role !== 'admin' && user.role !== 'developer') {
       return NextResponse.json({ error: 'No autorizado' }, { status: 403 });
     }
 

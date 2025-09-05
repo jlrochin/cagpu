@@ -2,18 +2,88 @@ import bcrypt from 'bcryptjs'
 import { prisma } from './db'
 import { NextRequest } from 'next/server'
 import { jwtVerify } from 'jose'
+import { JWT_SECRET, AUTH_SALT_ROUNDS, AUTH_MIN_PASSWORD_LENGTH } from './config'
 
-const JWT_SECRET = process.env.JWT_SECRET || 'supersecreto'
+export interface PasswordValidationResult {
+  isValid: boolean
+  errors: string[]
+  score: number // 0-4: muy débil, 5-7: débil, 8-10: moderada, 11-13: fuerte, 14+: muy fuerte
+}
+
+export function validatePassword(password: string): PasswordValidationResult {
+  const errors: string[] = []
+  let score = 0
+
+  // Validaciones básicas
+  if (!password || password.length < AUTH_MIN_PASSWORD_LENGTH) {
+    errors.push(`La contraseña debe tener al menos ${AUTH_MIN_PASSWORD_LENGTH} caracteres`)
+  } else {
+    score += Math.min(password.length, 8) // Máximo 8 puntos por longitud
+  }
+
+  if (!/(?=.*[a-z])/.test(password)) {
+    errors.push('Debe contener al menos una letra minúscula')
+  } else {
+    score += 1
+  }
+
+  if (!/(?=.*[A-Z])/.test(password)) {
+    errors.push('Debe contener al menos una letra mayúscula')
+  } else {
+    score += 1
+  }
+
+  if (!/(?=.*\d)/.test(password)) {
+    errors.push('Debe contener al menos un número')
+  } else {
+    score += 1
+  }
+
+  if (!/(?=.*[!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?])/.test(password)) {
+    errors.push('Debe contener al menos un símbolo especial')
+  } else {
+    score += 1
+  }
+
+  // Validaciones adicionales de seguridad
+  if (/(.)\1{2,}/.test(password)) {
+    errors.push('No debe contener más de 2 caracteres consecutivos iguales')
+  }
+
+  if (/^(.)\1+$/.test(password)) {
+    errors.push('No debe contener solo un tipo de carácter repetido')
+  }
+
+  // Patrones comunes de contraseñas débiles
+  const weakPatterns = [
+    /^123456/,
+    /^password/i,
+    /^qwerty/i,
+    /^admin/i,
+    /^123456789/,
+    /^111111/,
+    /^abc123/,
+    /^password123/i
+  ]
+
+  if (weakPatterns.some(pattern => pattern.test(password))) {
+    errors.push('La contraseña es demasiado común o predecible')
+    score = Math.max(0, score - 3)
+  }
+
+  return {
+    isValid: errors.length === 0,
+    errors,
+    score: Math.min(score, 20)
+  }
+}
 
 export function isStrongPassword(password: string): boolean {
-  // Mínimo 12 caracteres, al menos una mayúscula, una minúscula, un número y un símbolo
-  const strongRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?]).{12,}$/
-  return strongRegex.test(password)
+  return validatePassword(password).isValid
 }
 
 export async function hashPassword(password: string): Promise<string> {
-  const saltRounds = 14 // Mayor seguridad
-  return bcrypt.hash(password, saltRounds)
+  return bcrypt.hash(password, AUTH_SALT_ROUNDS)
 }
 
 export async function verifyPassword(password: string, hashedPassword: string): Promise<boolean> {
@@ -31,9 +101,9 @@ export async function createUser(userData: {
   phone?: string
   serviceId?: string
 }) {
-  // Validación temporal para pruebas: solo requiere al menos 4 caracteres
-  if (!userData.password || userData.password.length < 4) {
-    throw new Error('La contraseña debe tener al menos 4 caracteres (validación temporal para pruebas).')
+  // Validación robusta de contraseña
+  if (!userData.password || !isStrongPassword(userData.password)) {
+    throw new Error(`La contraseña debe tener al menos ${AUTH_MIN_PASSWORD_LENGTH} caracteres, incluyendo mayúsculas, minúsculas, números y símbolos especiales.`)
   }
   const hashedPassword = await hashPassword(userData.password)
   const user = await prisma.user.create({
@@ -51,12 +121,12 @@ export async function createUser(userData: {
     },
   })
   // Registrar en historial
-  if (userData.performedBy) {
+  if ((userData as any).performedBy) {
     await prisma.userChangeHistory.create({
       data: {
         targetUserId: user.id,
         action: 'create',
-        performedBy: userData.performedBy,
+        performedBy: (userData as any).performedBy,
         details: `Usuario creado: ${user.username}`,
       },
     })
@@ -160,8 +230,11 @@ export async function updateUser(id: number, userData: {
   password?: string
   performedBy?: number // id del admin que modifica
 }) {
-  if (userData.password && !isStrongPassword(userData.password)) {
-    throw new Error('La contraseña no es lo suficientemente segura.')
+  if (userData.password) {
+    const validation = validatePassword(userData.password)
+    if (!validation.isValid) {
+      throw new Error(`La contraseña no es lo suficientemente segura: ${validation.errors.join(', ')}`)
+    }
   }
   let dataToUpdate: any = { ...userData }
   if (userData.password) {

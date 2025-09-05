@@ -19,8 +19,8 @@ export async function GET(request: NextRequest) {
   }
 }
 
-// Nuevo endpoint para consultar el log de auditoría general
-export async function GET_AUDIT_LOG(request: NextRequest) {
+// Endpoint para consultar el log de auditoría general
+export async function POST(request: NextRequest) {
   try {
     const logs = await prisma.auditLog.findMany({
       orderBy: { createdAt: 'desc' },
